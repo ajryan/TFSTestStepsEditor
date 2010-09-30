@@ -14,91 +14,137 @@ using Microsoft.TeamFoundation.WorkItemTracking.Client;
 
 namespace TestStepsEditor
 {
-	public partial class MainForm : Form
-	{
-		private TfsTeamProjectCollection _tfs;
-		private ITestManagementTeamProject _testproject;
-		private ITestCase _testCase;
-		private List<SimpleStep> _simpleSteps;
+    public partial class MainForm : Form
+    {
+        private TfsTeamProjectCollection _tfs;
+        private ITestManagementTeamProject _testproject;
+        private ITestCase _testCase;
+        private BindingList<SimpleStep> _simpleSteps;
 
-		public MainForm()
-		{
-			InitializeComponent();
+        public MainForm()
+        {
+            InitializeComponent();
 
-			ServerSettings.Load(out _tfs, out _testproject);
-			if (_testproject != null)
-				_projectLabel.Text = _testproject.WitProject.Name;
-		}
+            ServerSettings.Load(out _tfs, out _testproject);
+            if (_testproject != null)
+                _projectLabel.Text = _testproject.WitProject.Name;
+        }
 
-		private void SaveButton_Click(object sender, EventArgs e)
-		{
-			if (_testCase == null || _simpleSteps == null || _simpleSteps.Count == 0)
-				return;
+        private void SaveButton_Click(object sender, EventArgs e)
+        {
+            if (_testCase == null || _simpleSteps == null || _simpleSteps.Count == 0)
+                return;
 
-			int stepNumber = 0;
-			foreach (SimpleStep step in _simpleSteps)
-			{
-				(_testCase.Actions[stepNumber] as ITestStep).Title = new ParameterizedString(step.Title);
-				(_testCase.Actions[stepNumber] as ITestStep).ExpectedResult = new ParameterizedString(step.ExpectedResult);
+            try
+            {
+                this.Enabled = false;
 
-				stepNumber++;
-			}
+                int stepNumber = 0;
+                foreach (SimpleStep step in _simpleSteps)
+                {
+                    if (_testCase.Actions.Count <= stepNumber)
+                    {
+                        _testCase.Actions.Add(_testCase.CreateTestStep());
+                    }
 
-			_testCase.Save();
-		}
+                    (_testCase.Actions[stepNumber] as ITestStep).Title = new ParameterizedString(step.Title);
+                    (_testCase.Actions[stepNumber] as ITestStep).ExpectedResult = new ParameterizedString(step.ExpectedResult);
 
-		private void LoadButton_Click(object sender, EventArgs e)
-		{
-			int workItemId;
-			if (!Int32.TryParse(_workItemTextBox.Text, out workItemId))
-				return;
+                    stepNumber++;
+                }
 
-			try
-			{
-				_testCase = _testproject.TestCases.Find(workItemId);
-			}
-			catch (DeniedOrNotExistException ex)
-			{
-				MessageBox.Show("Could not load test case: " + ex.Message, "Test Case Load Error");
-				return;				
-			}
-			if (_testCase == null)
-			{
-				MessageBox.Show("Input test case ID not found.", "Test Case Load Error");
-				return;
-			}
+                while (stepNumber < _testCase.Actions.Count)
+                    _testCase.Actions.RemoveAt(stepNumber);
 
-			_testStepsGridView.SuspendLayout();
-			this.Enabled = false;
+                _testCase.Save();
+            }
+            finally
+            {
+                this.Enabled = true;
+            }
 
-			_simpleSteps = new List<SimpleStep>(_testCase.Actions.Count);
-			foreach (ITestAction action in _testCase.Actions)
-			{
-				var testStep = action as ITestStep;
-				_simpleSteps.Add(new SimpleStep(testStep.Title.ToString(), testStep.ExpectedResult.ToString()));
-			}
+            MessageBox.Show("Save successful.");
+        }
 
-			_testStepsGridView.DataSource = _simpleSteps;
-			this.Enabled = true;
-			_testStepsGridView.ResumeLayout(true);
-		}
+        private void LoadButton_Click(object sender, EventArgs e)
+        {
+            int workItemId;
+            if (!Int32.TryParse(_workItemTextBox.Text, out workItemId))
+                return;
 
-		private void ChangeProjectButton_Click(object sender, EventArgs e)
-		{
-			ServerSettings.LoadProjectSelectionFromUser(out _tfs, out _testproject);
-			if (_testproject != null)
-				_projectLabel.Text = _testproject.WitProject.Name;
+            try
+            {
+                _testCase = _testproject.TestCases.Find(workItemId);
+            }
+            catch (DeniedOrNotExistException ex)
+            {
+                MessageBox.Show("Could not load test case: " + ex.Message, "Test Case Load Error");
+                return;
+            }
+            if (_testCase == null)
+            {
+                MessageBox.Show("Input test case ID not found.", "Test Case Load Error");
+                return;
+            }
 
-			// clear current test info
-			if (_simpleSteps != null) 
-				_simpleSteps.Clear();
-			_testCase = null;
-		}
+            _testStepsGridView.SuspendLayout();
+            this.Enabled = false;
 
-		private void WorkItemTextBox_KeyPress(object sender, KeyPressEventArgs e)
-		{
-			if ((int)e.KeyChar == 13)
-				LoadButton_Click(null, null);
-		}
-	}
+            _simpleSteps = new BindingList<SimpleStep>();//_testCase.Actions.Count);
+            foreach (ITestAction action in _testCase.Actions)
+            {
+                var testStep = action as ITestStep;
+                _simpleSteps.Add(new SimpleStep(testStep.Title.ToString(), testStep.ExpectedResult.ToString()));
+            }
+
+            _testStepsGridView.DataSource = _simpleSteps;
+            this.Enabled = true;
+            _testStepsGridView.ResumeLayout(true);
+        }
+
+        private void ChangeProjectButton_Click(object sender, EventArgs e)
+        {
+            ServerSettings.LoadProjectSelectionFromUser(out _tfs, out _testproject);
+            if (_testproject != null)
+                _projectLabel.Text = _testproject.WitProject.Name;
+
+            // clear current test info
+            if (_simpleSteps != null)
+                _simpleSteps.Clear();
+            _testCase = null;
+        }
+
+        private void WorkItemTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if ((int)e.KeyChar == 13)
+                LoadButton_Click(null, null);
+        }
+
+        private void TestStepsGridView_CurrentCellChanged(object sender, EventArgs e)
+        {
+            if (_testStepsGridView.CurrentRow == null)
+                _rowLabel.Text = "Row:";
+            else
+                _rowLabel.Text = String.Format("Row:{0}", _testStepsGridView.CurrentRow.Index + 1);
+        }
+
+        private void InsertButton_Click(object sender, EventArgs e)
+        {
+            if (_testStepsGridView.CurrentRow != null)
+            {
+                _simpleSteps.Insert(_testStepsGridView.CurrentRow.Index, new SimpleStep());
+                _testStepsGridView.Focus();
+            }
+        }
+
+        private void DeleteButton_Click(object sender, EventArgs e)
+        {
+            if (_testStepsGridView.CurrentRow != null)
+            {
+                _simpleSteps.RemoveAt(_testStepsGridView.CurrentRow.Index);
+                _testStepsGridView.Focus();
+            }
+        }
+
+    }
 }

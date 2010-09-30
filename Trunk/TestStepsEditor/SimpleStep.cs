@@ -10,6 +10,12 @@ namespace TestStepsEditor
 		public string Title { get; set; }
 		public string ExpectedResult { get; set; }
 
+        public SimpleStep()
+        {
+            Title = String.Empty;
+            ExpectedResult = String.Empty;
+        }
+
 		public SimpleStep(string title, string expectedResult)
 		{
 			Title = title.Replace("\n", "\r\n");
