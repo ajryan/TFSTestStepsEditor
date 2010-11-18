@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.TestManagement.Client;
-using Microsoft.Win32;
-using System.Diagnostics;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
 
 namespace TestStepsEditor
@@ -18,16 +11,25 @@ namespace TestStepsEditor
     {
         private TfsTeamProjectCollection _tfs;
         private ITestManagementTeamProject _testproject;
-        private ITestCase _testCase;
+        private ITestBase _testCase;
         private BindingList<SimpleStep> _simpleSteps;
 
         public MainForm()
         {
             InitializeComponent();
 
-            ServerSettings.Load(out _tfs, out _testproject);
-            if (_testproject != null)
-                _projectLabel.Text = _testproject.WitProject.Name;
+        	try
+        	{
+				ServerSettings.Load(out _tfs, out _testproject);
+				if (_testproject != null)
+					_projectLabel.Text = _testproject.WitProject.Name;
+        	}
+        	catch (Exception ex)
+        	{
+        		MessageBox.Show("Could not load previous TFS connection.\n\nError:\n" + ex.Message);
+        		_projectLabel.Text = "[Not connected]";
+        	}
+			
         }
 
         private void SaveButton_Click(object sender, EventArgs e)
@@ -37,7 +39,7 @@ namespace TestStepsEditor
 
             try
             {
-                this.Enabled = false;
+                Enabled = false;
 
                 int stepNumber = 0;
                 foreach (SimpleStep step in _simpleSteps)
@@ -47,10 +49,24 @@ namespace TestStepsEditor
                         _testCase.Actions.Add(_testCase.CreateTestStep());
                     }
 
-                    (_testCase.Actions[stepNumber] as ITestStep).Title = new ParameterizedString(step.Title);
-                    (_testCase.Actions[stepNumber] as ITestStep).ExpectedResult = new ParameterizedString(step.ExpectedResult);
+					// directly apply to existing ITestSteps
+					if (_testCase.Actions[stepNumber] is ITestStep)
+					{
+						((ITestStep) _testCase.Actions[stepNumber]).Title = new ParameterizedString(step.Title);
+						((ITestStep) _testCase.Actions[stepNumber]).ExpectedResult = new ParameterizedString(step.ExpectedResult);
+					}
+					// current action is not ITestStep: if user-entered data is a step
+					else if (step.IsTestStep())
+					{
+						// insert a new action at this point
+						var newAction = _testCase.CreateTestStep();
+						newAction.Title = new ParameterizedString(step.Title);
+						newAction.ExpectedResult = new ParameterizedString(step.ExpectedResult);
 
-                    stepNumber++;
+						_testCase.Actions.Insert(stepNumber, newAction);
+					}
+
+                	 stepNumber++;
                 }
 
                 while (stepNumber < _testCase.Actions.Count)
@@ -60,7 +76,7 @@ namespace TestStepsEditor
             }
             finally
             {
-                this.Enabled = true;
+                Enabled = true;
             }
 
             MessageBox.Show("Save successful.");
@@ -74,7 +90,8 @@ namespace TestStepsEditor
 
             try
             {
-                _testCase = _testproject.TestCases.Find(workItemId);
+                _testCase = _testproject.TestCases.Find(workItemId) ??
+                            (ITestBase) _testproject.SharedSteps.Find(workItemId);
             }
             catch (DeniedOrNotExistException ex)
             {
@@ -88,17 +105,29 @@ namespace TestStepsEditor
             }
 
             _testStepsGridView.SuspendLayout();
-            this.Enabled = false;
+            Enabled = false;
 
-            _simpleSteps = new BindingList<SimpleStep>();//_testCase.Actions.Count);
+            _simpleSteps = new BindingList<SimpleStep>();
             foreach (ITestAction action in _testCase.Actions)
             {
-                var testStep = action as ITestStep;
-                _simpleSteps.Add(new SimpleStep(testStep.Title.ToString(), testStep.ExpectedResult.ToString()));
+				if (action is ITestStep)
+				{
+					var testStep = action as ITestStep;
+					_simpleSteps.Add(new SimpleStep(testStep.Title.ToString(), testStep.ExpectedResult.ToString()));
+				}
+				else if (action is ISharedStepReference)
+				{
+					var sharedStep = action as ISharedStepReference;
+					_simpleSteps.Add(new SimpleStep("Shared step ID " + sharedStep.SharedStepId, String.Empty, false));
+				}
+				else
+				{
+					_simpleSteps.Add(new SimpleStep("Unknown action " + action.Id, String.Empty, false));
+				}
             }
 
             _testStepsGridView.DataSource = _simpleSteps;
-            this.Enabled = true;
+            Enabled = true;
             _testStepsGridView.ResumeLayout(true);
         }
 
@@ -116,19 +145,18 @@ namespace TestStepsEditor
 
         private void WorkItemTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if ((int)e.KeyChar == 13)
+            if (e.KeyChar == 13)
                 LoadButton_Click(null, null);
         }
 
         private void TestStepsGridView_CurrentCellChanged(object sender, EventArgs e)
         {
-            if (_testStepsGridView.CurrentRow == null)
-                _rowLabel.Text = "Row:";
-            else
-                _rowLabel.Text = String.Format("Row:{0}", _testStepsGridView.CurrentRow.Index + 1);
+        	_rowLabel.Text = _testStepsGridView.CurrentRow == null
+				? "Row:"
+				: String.Format("Row:{0}", _testStepsGridView.CurrentRow.Index + 1);
         }
 
-        private void InsertButton_Click(object sender, EventArgs e)
+    	private void InsertButton_Click(object sender, EventArgs e)
         {
             if (_testStepsGridView.CurrentRow != null)
             {

@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace TestStepsEditor
 {
 	public class SimpleStep
 	{
+		private readonly bool _isTestStep = true;
+
 		public string Title { get; set; }
 		public string ExpectedResult { get; set; }
 
@@ -16,10 +15,16 @@ namespace TestStepsEditor
             ExpectedResult = String.Empty;
         }
 
-		public SimpleStep(string title, string expectedResult)
+		public SimpleStep(string title, string expectedResult, bool isTestStep = true)
 		{
+			_isTestStep = isTestStep;
 			Title = title.Replace("\n", "\r\n");
 			ExpectedResult = expectedResult.Replace("\n", "\r\n");
+		}
+
+		public bool IsTestStep()
+		{
+			return _isTestStep;
 		}
 	}
 }

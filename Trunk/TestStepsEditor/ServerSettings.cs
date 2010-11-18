@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.TestManagement.Client;
 using Microsoft.Win32;
@@ -10,7 +7,7 @@ namespace TestStepsEditor
 {
 	public class ServerSettings
 	{
-		private const string RegKey = @"Lonza\TestEditor";
+		private const string REG_KEY = @"Lonza\TestEditor";
 
 		public static void Load(out TfsTeamProjectCollection tfs, out ITestManagementTeamProject testProject)
 		{
@@ -25,7 +22,7 @@ namespace TestStepsEditor
 			tfs = null;
 			testProject = null;
 
-			var key = Registry.CurrentUser.OpenSubKey(RegKey);
+			var key = Registry.CurrentUser.OpenSubKey(REG_KEY);
 			if (key == null)
 				return false;
 
@@ -63,10 +60,10 @@ namespace TestStepsEditor
 
 		private static void SaveProjectSelectionToRegistry(TfsTeamProjectCollection tfs, ITestManagementTeamProject testProject)
 		{
-			var key = Registry.CurrentUser.OpenSubKey(RegKey, true);
+			var key = Registry.CurrentUser.OpenSubKey(REG_KEY, true);
 			if (key == null)
 			{
-				key = Registry.CurrentUser.CreateSubKey(RegKey);
+				key = Registry.CurrentUser.CreateSubKey(REG_KEY);
 				if (key == null)
 					return;
 			}
