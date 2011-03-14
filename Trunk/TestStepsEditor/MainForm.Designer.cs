@@ -28,166 +28,404 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            this._workItemLabel = new System.Windows.Forms.Label();
-            this._workItemTextBox = new System.Windows.Forms.TextBox();
-            this._loadButton = new System.Windows.Forms.Button();
-            this._saveButton = new System.Windows.Forms.Button();
-            this._changeProjectButton = new System.Windows.Forms.Button();
-            this._testStepsGridView = new System.Windows.Forms.DataGridView();
-            this._projectLabel = new System.Windows.Forms.Label();
-            this._rowLabel = new System.Windows.Forms.Label();
-            this._insertButton = new System.Windows.Forms.Button();
-            this._deleteButton = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this._testStepsGridView)).BeginInit();
-            this.SuspendLayout();
-            // 
-            // _workItemLabel
-            // 
-            this._workItemLabel.AutoSize = true;
-            this._workItemLabel.Location = new System.Drawing.Point(9, 9);
-            this._workItemLabel.Name = "_workItemLabel";
-            this._workItemLabel.Size = new System.Drawing.Size(56, 13);
-            this._workItemLabel.TabIndex = 0;
-            this._workItemLabel.Text = "Work Item";
-            // 
-            // _workItemTextBox
-            // 
-            this._workItemTextBox.Location = new System.Drawing.Point(71, 6);
-            this._workItemTextBox.Name = "_workItemTextBox";
-            this._workItemTextBox.Size = new System.Drawing.Size(100, 20);
-            this._workItemTextBox.TabIndex = 1;
-            this._workItemTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.WorkItemTextBox_KeyPress);
-            // 
-            // _loadButton
-            // 
-            this._loadButton.Location = new System.Drawing.Point(177, 4);
-            this._loadButton.Name = "_loadButton";
-            this._loadButton.Size = new System.Drawing.Size(75, 23);
-            this._loadButton.TabIndex = 2;
-            this._loadButton.Text = "&Load";
-            this._loadButton.UseVisualStyleBackColor = true;
-            this._loadButton.Click += new System.EventHandler(this.LoadButton_Click);
-            // 
-            // _saveButton
-            // 
-            this._saveButton.Location = new System.Drawing.Point(258, 4);
-            this._saveButton.Name = "_saveButton";
-            this._saveButton.Size = new System.Drawing.Size(75, 23);
-            this._saveButton.TabIndex = 4;
-            this._saveButton.Text = "&Save";
-            this._saveButton.UseVisualStyleBackColor = true;
-            this._saveButton.Click += new System.EventHandler(this.SaveButton_Click);
-            // 
-            // _changeProjectButton
-            // 
-            this._changeProjectButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this._changeProjectButton.Location = new System.Drawing.Point(671, 3);
-            this._changeProjectButton.Name = "_changeProjectButton";
-            this._changeProjectButton.Size = new System.Drawing.Size(109, 23);
-            this._changeProjectButton.TabIndex = 5;
-            this._changeProjectButton.Text = "&Change Project";
-            this._changeProjectButton.UseVisualStyleBackColor = true;
-            this._changeProjectButton.Click += new System.EventHandler(this.ChangeProjectButton_Click);
-            // 
-            // _testStepsGridView
-            // 
-            this._testStepsGridView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this._testStepsGridView.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this._testStepsGridView.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCellsExceptHeaders;
-            this._testStepsGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this._testStepsGridView.DefaultCellStyle = dataGridViewCellStyle1;
-            this._testStepsGridView.Location = new System.Drawing.Point(12, 33);
-            this._testStepsGridView.Name = "_testStepsGridView";
-            this._testStepsGridView.Size = new System.Drawing.Size(768, 428);
-            this._testStepsGridView.TabIndex = 6;
-            this._testStepsGridView.CurrentCellChanged += new System.EventHandler(this.TestStepsGridView_CurrentCellChanged);
-            // 
-            // _projectLabel
-            // 
-            this._projectLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this._projectLabel.AutoSize = true;
-            this._projectLabel.Location = new System.Drawing.Point(583, 8);
-            this._projectLabel.Name = "_projectLabel";
-            this._projectLabel.Size = new System.Drawing.Size(82, 13);
-            this._projectLabel.TabIndex = 7;
-            this._projectLabel.Text = "(not connected)";
-            this._projectLabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
-            // 
-            // _rowLabel
-            // 
-            this._rowLabel.AutoSize = true;
-            this._rowLabel.Location = new System.Drawing.Point(339, 8);
-            this._rowLabel.Name = "_rowLabel";
-            this._rowLabel.Size = new System.Drawing.Size(32, 13);
-            this._rowLabel.TabIndex = 8;
-            this._rowLabel.Text = "Row:";
-            // 
-            // _insertButton
-            // 
-            this._insertButton.Location = new System.Drawing.Point(410, 4);
-            this._insertButton.Name = "_insertButton";
-            this._insertButton.Size = new System.Drawing.Size(75, 23);
-            this._insertButton.TabIndex = 9;
-            this._insertButton.Text = "&Insert Step";
-            this._insertButton.UseVisualStyleBackColor = true;
-            this._insertButton.Click += new System.EventHandler(this.InsertButton_Click);
-            // 
-            // _deleteButton
-            // 
-            this._deleteButton.Location = new System.Drawing.Point(491, 4);
-            this._deleteButton.Name = "_deleteButton";
-            this._deleteButton.Size = new System.Drawing.Size(75, 23);
-            this._deleteButton.TabIndex = 10;
-            this._deleteButton.Text = "&Delete Step";
-            this._deleteButton.UseVisualStyleBackColor = true;
-            this._deleteButton.Click += new System.EventHandler(this.DeleteButton_Click);
-            // 
-            // MainForm
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(792, 473);
-            this.Controls.Add(this._deleteButton);
-            this.Controls.Add(this._insertButton);
-            this.Controls.Add(this._rowLabel);
-            this.Controls.Add(this._projectLabel);
-            this.Controls.Add(this._testStepsGridView);
-            this.Controls.Add(this._changeProjectButton);
-            this.Controls.Add(this._saveButton);
-            this.Controls.Add(this._loadButton);
-            this.Controls.Add(this._workItemTextBox);
-            this.Controls.Add(this._workItemLabel);
-            this.MinimumSize = new System.Drawing.Size(800, 500);
-            this.Name = "MainForm";
-            this.Text = "Test Steps Editor";
-            ((System.ComponentModel.ISupportInitialize)(this._testStepsGridView)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+			this.components = new System.ComponentModel.Container();
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+			this._testGridContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this._copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.BottomToolStripPanel = new System.Windows.Forms.ToolStripPanel();
+			this._bottomToolStrip = new System.Windows.Forms.ToolStrip();
+			this._findToolStripLabel = new System.Windows.Forms.ToolStripLabel();
+			this._findToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
+			this._findToolStripButton = new System.Windows.Forms.ToolStripButton();
+			this._replaceToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
+			this._replaceToolStripSplitButton = new System.Windows.Forms.ToolStripSplitButton();
+			this._replaceAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.replaceInSelectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._testStateToolStripLabel = new System.Windows.Forms.ToolStripLabel();
+			this.TopToolStripPanel = new System.Windows.Forms.ToolStripPanel();
+			this._topToolStrip = new System.Windows.Forms.ToolStrip();
+			this._workItemToolStripLabel = new System.Windows.Forms.ToolStripLabel();
+			this._workItemIdToolStripComboBox = new System.Windows.Forms.ToolStripComboBox();
+			this._loadToolStripButton = new System.Windows.Forms.ToolStripButton();
+			this._saveToolStripButton = new System.Windows.Forms.ToolStripButton();
+			this._closeToolStripButton = new System.Windows.Forms.ToolStripButton();
+			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+			this._insertStepToolStripButton = new System.Windows.Forms.ToolStripButton();
+			this._deleteStepToolStripButton = new System.Windows.Forms.ToolStripButton();
+			this._changeProjectToolStripButton = new System.Windows.Forms.ToolStripButton();
+			this._connStateToolStripLabel = new System.Windows.Forms.ToolStripLabel();
+			this.RightToolStripPanel = new System.Windows.Forms.ToolStripPanel();
+			this.LeftToolStripPanel = new System.Windows.Forms.ToolStripPanel();
+			this.ContentPanel = new System.Windows.Forms.ToolStripContentPanel();
+			this._toolStripContainer = new System.Windows.Forms.ToolStripContainer();
+			this._testTabControl = new System.Windows.Forms.TabControl();
+			this._loadTestBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+			this._saveTestBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+			this._testGridContextMenu.SuspendLayout();
+			this._bottomToolStrip.SuspendLayout();
+			this._topToolStrip.SuspendLayout();
+			this._toolStripContainer.BottomToolStripPanel.SuspendLayout();
+			this._toolStripContainer.ContentPanel.SuspendLayout();
+			this._toolStripContainer.TopToolStripPanel.SuspendLayout();
+			this._toolStripContainer.SuspendLayout();
+			this.SuspendLayout();
+			// 
+			// _testGridContextMenu
+			// 
+			this._testGridContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._copyToolStripMenuItem,
+            this._pasteToolStripMenuItem});
+			this._testGridContextMenu.Name = "_testGridContextMenu";
+			this._testGridContextMenu.Size = new System.Drawing.Size(103, 48);
+			// 
+			// _copyToolStripMenuItem
+			// 
+			this._copyToolStripMenuItem.Name = "_copyToolStripMenuItem";
+			this._copyToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
+			this._copyToolStripMenuItem.Text = "&Copy";
+			this._copyToolStripMenuItem.Click += new System.EventHandler(this.TestGridContext_Copy_Click);
+			// 
+			// _pasteToolStripMenuItem
+			// 
+			this._pasteToolStripMenuItem.Name = "_pasteToolStripMenuItem";
+			this._pasteToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
+			this._pasteToolStripMenuItem.Text = "&Paste";
+			this._pasteToolStripMenuItem.Click += new System.EventHandler(this.TestGridContext_Paste_Click);
+			// 
+			// BottomToolStripPanel
+			// 
+			this.BottomToolStripPanel.Location = new System.Drawing.Point(0, 0);
+			this.BottomToolStripPanel.Name = "BottomToolStripPanel";
+			this.BottomToolStripPanel.Orientation = System.Windows.Forms.Orientation.Horizontal;
+			this.BottomToolStripPanel.RowMargin = new System.Windows.Forms.Padding(3, 0, 0, 0);
+			this.BottomToolStripPanel.Size = new System.Drawing.Size(0, 0);
+			// 
+			// _bottomToolStrip
+			// 
+			this._bottomToolStrip.Dock = System.Windows.Forms.DockStyle.None;
+			this._bottomToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._findToolStripLabel,
+            this._findToolStripTextBox,
+            this._findToolStripButton,
+            this._replaceToolStripTextBox,
+            this._replaceToolStripSplitButton,
+            this._testStateToolStripLabel});
+			this._bottomToolStrip.Location = new System.Drawing.Point(0, 0);
+			this._bottomToolStrip.Name = "_bottomToolStrip";
+			this._bottomToolStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
+			this._bottomToolStrip.Size = new System.Drawing.Size(784, 25);
+			this._bottomToolStrip.Stretch = true;
+			this._bottomToolStrip.TabIndex = 0;
+			this._bottomToolStrip.TabStop = true;
+			// 
+			// _findToolStripLabel
+			// 
+			this._findToolStripLabel.Name = "_findToolStripLabel";
+			this._findToolStripLabel.Size = new System.Drawing.Size(30, 22);
+			this._findToolStripLabel.Text = "&Find";
+			// 
+			// _findToolStripTextBox
+			// 
+			this._findToolStripTextBox.AcceptsReturn = true;
+			this._findToolStripTextBox.Name = "_findToolStripTextBox";
+			this._findToolStripTextBox.Size = new System.Drawing.Size(200, 25);
+			this._findToolStripTextBox.ToolTipText = "Find";
+			this._findToolStripTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+			// 
+			// _findToolStripButton
+			// 
+			this._findToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+			this._findToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_findToolStripButton.Image")));
+			this._findToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._findToolStripButton.Name = "_findToolStripButton";
+			this._findToolStripButton.Size = new System.Drawing.Size(23, 22);
+			this._findToolStripButton.Text = "Find next (F3)";
+			this._findToolStripButton.Click += new System.EventHandler(this.FindButton_Click);
+			// 
+			// _replaceToolStripTextBox
+			// 
+			this._replaceToolStripTextBox.AcceptsReturn = true;
+			this._replaceToolStripTextBox.Name = "_replaceToolStripTextBox";
+			this._replaceToolStripTextBox.Size = new System.Drawing.Size(200, 25);
+			this._replaceToolStripTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+			// 
+			// _replaceToolStripSplitButton
+			// 
+			this._replaceToolStripSplitButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._replaceAllToolStripMenuItem,
+            this.replaceInSelectionToolStripMenuItem});
+			this._replaceToolStripSplitButton.Image = ((System.Drawing.Image)(resources.GetObject("_replaceToolStripSplitButton.Image")));
+			this._replaceToolStripSplitButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._replaceToolStripSplitButton.Name = "_replaceToolStripSplitButton";
+			this._replaceToolStripSplitButton.Size = new System.Drawing.Size(143, 22);
+			this._replaceToolStripSplitButton.Text = "&Replace in selection";
+			this._replaceToolStripSplitButton.ButtonClick += new System.EventHandler(this.ReplaceSelectionButton_Click);
+			// 
+			// _replaceAllToolStripMenuItem
+			// 
+			this._replaceAllToolStripMenuItem.Name = "_replaceAllToolStripMenuItem";
+			this._replaceAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.A)));
+			this._replaceAllToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
+			this._replaceAllToolStripMenuItem.Text = "Replace &all";
+			this._replaceAllToolStripMenuItem.Click += new System.EventHandler(this.ReplaceAllButton_Click);
+			// 
+			// replaceInSelectionToolStripMenuItem
+			// 
+			this.replaceInSelectionToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this.replaceInSelectionToolStripMenuItem.Name = "replaceInSelectionToolStripMenuItem";
+			this.replaceInSelectionToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.R)));
+			this.replaceInSelectionToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
+			this.replaceInSelectionToolStripMenuItem.Text = "&Replace in selection";
+			this.replaceInSelectionToolStripMenuItem.Click += new System.EventHandler(this.ReplaceSelectionButton_Click);
+			// 
+			// _testStateToolStripLabel
+			// 
+			this._testStateToolStripLabel.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+			this._testStateToolStripLabel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+			this._testStateToolStripLabel.Name = "_testStateToolStripLabel";
+			this._testStateToolStripLabel.Size = new System.Drawing.Size(90, 22);
+			this._testStateToolStripLabel.Text = "(no test loaded)";
+			this._testStateToolStripLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+			// 
+			// TopToolStripPanel
+			// 
+			this.TopToolStripPanel.Location = new System.Drawing.Point(0, 0);
+			this.TopToolStripPanel.Name = "TopToolStripPanel";
+			this.TopToolStripPanel.Orientation = System.Windows.Forms.Orientation.Horizontal;
+			this.TopToolStripPanel.RowMargin = new System.Windows.Forms.Padding(3, 0, 0, 0);
+			this.TopToolStripPanel.Size = new System.Drawing.Size(0, 0);
+			// 
+			// _topToolStrip
+			// 
+			this._topToolStrip.Dock = System.Windows.Forms.DockStyle.None;
+			this._topToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._workItemToolStripLabel,
+            this._workItemIdToolStripComboBox,
+            this._loadToolStripButton,
+            this._saveToolStripButton,
+            this._closeToolStripButton,
+            this.toolStripSeparator1,
+            this._insertStepToolStripButton,
+            this._deleteStepToolStripButton,
+            this._changeProjectToolStripButton,
+            this._connStateToolStripLabel});
+			this._topToolStrip.Location = new System.Drawing.Point(0, 0);
+			this._topToolStrip.Name = "_topToolStrip";
+			this._topToolStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
+			this._topToolStrip.Size = new System.Drawing.Size(784, 25);
+			this._topToolStrip.Stretch = true;
+			this._topToolStrip.TabIndex = 0;
+			this._topToolStrip.TabStop = true;
+			// 
+			// _workItemToolStripLabel
+			// 
+			this._workItemToolStripLabel.Name = "_workItemToolStripLabel";
+			this._workItemToolStripLabel.Size = new System.Drawing.Size(62, 22);
+			this._workItemToolStripLabel.Text = "&Work Item";
+			// 
+			// _workItemIdToolStripComboBox
+			// 
+			this._workItemIdToolStripComboBox.Name = "_workItemIdToolStripComboBox";
+			this._workItemIdToolStripComboBox.Size = new System.Drawing.Size(121, 25);
+			this._workItemIdToolStripComboBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
+			// 
+			// _loadToolStripButton
+			// 
+			this._loadToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_loadToolStripButton.Image")));
+			this._loadToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._loadToolStripButton.Name = "_loadToolStripButton";
+			this._loadToolStripButton.Size = new System.Drawing.Size(53, 22);
+			this._loadToolStripButton.Text = "&Load";
+			this._loadToolStripButton.Click += new System.EventHandler(this.LoadButton_Click);
+			// 
+			// _saveToolStripButton
+			// 
+			this._saveToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_saveToolStripButton.Image")));
+			this._saveToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._saveToolStripButton.Name = "_saveToolStripButton";
+			this._saveToolStripButton.Size = new System.Drawing.Size(51, 22);
+			this._saveToolStripButton.Text = "&Save";
+			this._saveToolStripButton.Click += new System.EventHandler(this.SaveButton_Click);
+			// 
+			// _closeToolStripButton
+			// 
+			this._closeToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_closeToolStripButton.Image")));
+			this._closeToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._closeToolStripButton.Name = "_closeToolStripButton";
+			this._closeToolStripButton.Size = new System.Drawing.Size(56, 22);
+			this._closeToolStripButton.Text = "Clos&e";
+			this._closeToolStripButton.Click += new System.EventHandler(this.CloseCurentButton_Click);
+			// 
+			// toolStripSeparator1
+			// 
+			this.toolStripSeparator1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.toolStripSeparator1.Name = "toolStripSeparator1";
+			this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+			// 
+			// _insertStepToolStripButton
+			// 
+			this._insertStepToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_insertStepToolStripButton.Image")));
+			this._insertStepToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._insertStepToolStripButton.Name = "_insertStepToolStripButton";
+			this._insertStepToolStripButton.Size = new System.Drawing.Size(82, 22);
+			this._insertStepToolStripButton.Text = "&Insert Step";
+			this._insertStepToolStripButton.Click += new System.EventHandler(this.InsertButton_Click);
+			// 
+			// _deleteStepToolStripButton
+			// 
+			this._deleteStepToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_deleteStepToolStripButton.Image")));
+			this._deleteStepToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._deleteStepToolStripButton.Name = "_deleteStepToolStripButton";
+			this._deleteStepToolStripButton.Size = new System.Drawing.Size(86, 22);
+			this._deleteStepToolStripButton.Text = "&Delete Step";
+			this._deleteStepToolStripButton.Click += new System.EventHandler(this.DeleteButton_Click);
+			// 
+			// _changeProjectToolStripButton
+			// 
+			this._changeProjectToolStripButton.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+			this._changeProjectToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_changeProjectToolStripButton.Image")));
+			this._changeProjectToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._changeProjectToolStripButton.Name = "_changeProjectToolStripButton";
+			this._changeProjectToolStripButton.Size = new System.Drawing.Size(108, 22);
+			this._changeProjectToolStripButton.Text = "&Change Project";
+			this._changeProjectToolStripButton.Click += new System.EventHandler(this.ChangeProjectButton_Click);
+			// 
+			// _connStateToolStripLabel
+			// 
+			this._connStateToolStripLabel.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+			this._connStateToolStripLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this._connStateToolStripLabel.Name = "_connStateToolStripLabel";
+			this._connStateToolStripLabel.Size = new System.Drawing.Size(96, 22);
+			this._connStateToolStripLabel.Text = "(not connected)";
+			// 
+			// RightToolStripPanel
+			// 
+			this.RightToolStripPanel.Location = new System.Drawing.Point(0, 0);
+			this.RightToolStripPanel.Name = "RightToolStripPanel";
+			this.RightToolStripPanel.Orientation = System.Windows.Forms.Orientation.Horizontal;
+			this.RightToolStripPanel.RowMargin = new System.Windows.Forms.Padding(3, 0, 0, 0);
+			this.RightToolStripPanel.Size = new System.Drawing.Size(0, 0);
+			// 
+			// LeftToolStripPanel
+			// 
+			this.LeftToolStripPanel.Location = new System.Drawing.Point(0, 0);
+			this.LeftToolStripPanel.Name = "LeftToolStripPanel";
+			this.LeftToolStripPanel.Orientation = System.Windows.Forms.Orientation.Horizontal;
+			this.LeftToolStripPanel.RowMargin = new System.Windows.Forms.Padding(3, 0, 0, 0);
+			this.LeftToolStripPanel.Size = new System.Drawing.Size(0, 0);
+			// 
+			// ContentPanel
+			// 
+			this.ContentPanel.Size = new System.Drawing.Size(772, 387);
+			// 
+			// _toolStripContainer
+			// 
+			// 
+			// _toolStripContainer.BottomToolStripPanel
+			// 
+			this._toolStripContainer.BottomToolStripPanel.Controls.Add(this._bottomToolStrip);
+			// 
+			// _toolStripContainer.ContentPanel
+			// 
+			this._toolStripContainer.ContentPanel.Controls.Add(this._testTabControl);
+			this._toolStripContainer.ContentPanel.Size = new System.Drawing.Size(784, 412);
+			this._toolStripContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+			this._toolStripContainer.LeftToolStripPanelVisible = false;
+			this._toolStripContainer.Location = new System.Drawing.Point(0, 0);
+			this._toolStripContainer.Name = "_toolStripContainer";
+			this._toolStripContainer.RightToolStripPanelVisible = false;
+			this._toolStripContainer.Size = new System.Drawing.Size(784, 462);
+			this._toolStripContainer.TabIndex = 15;
+			this._toolStripContainer.Text = "toolStripContainer1";
+			// 
+			// _toolStripContainer.TopToolStripPanel
+			// 
+			this._toolStripContainer.TopToolStripPanel.Controls.Add(this._topToolStrip);
+			// 
+			// _testTabControl
+			// 
+			this._testTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+			this._testTabControl.ItemSize = new System.Drawing.Size(0, 20);
+			this._testTabControl.Location = new System.Drawing.Point(0, 0);
+			this._testTabControl.Multiline = true;
+			this._testTabControl.Name = "_testTabControl";
+			this._testTabControl.SelectedIndex = 0;
+			this._testTabControl.Size = new System.Drawing.Size(784, 412);
+			this._testTabControl.TabIndex = 0;
+			// 
+			// _loadTestBackgroundWorker
+			// 
+			this._loadTestBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.LoadTestBackgroundWorker_DoWork);
+			this._loadTestBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.LoadTestBackgroundWorker_RunWorkerCompleted);
+			// 
+			// _saveTestBackgroundWorker
+			// 
+			this._saveTestBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.SaveTestBackgroundWorker_DoWork);
+			this._saveTestBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.SaveTestBackgroundWorker_RunWorkerCompleted);
+			// 
+			// MainForm
+			// 
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.ClientSize = new System.Drawing.Size(784, 462);
+			this.Controls.Add(this._toolStripContainer);
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+			this.KeyPreview = true;
+			this.MinimumSize = new System.Drawing.Size(800, 500);
+			this.Name = "MainForm";
+			this.Text = "Test Steps Editor";
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_Closing);
+			this._testGridContextMenu.ResumeLayout(false);
+			this._bottomToolStrip.ResumeLayout(false);
+			this._bottomToolStrip.PerformLayout();
+			this._topToolStrip.ResumeLayout(false);
+			this._topToolStrip.PerformLayout();
+			this._toolStripContainer.BottomToolStripPanel.ResumeLayout(false);
+			this._toolStripContainer.BottomToolStripPanel.PerformLayout();
+			this._toolStripContainer.ContentPanel.ResumeLayout(false);
+			this._toolStripContainer.TopToolStripPanel.ResumeLayout(false);
+			this._toolStripContainer.TopToolStripPanel.PerformLayout();
+			this._toolStripContainer.ResumeLayout(false);
+			this._toolStripContainer.PerformLayout();
+			this.ResumeLayout(false);
 
 		}
 
 		#endregion
 
-		private System.Windows.Forms.Label _workItemLabel;
-		private System.Windows.Forms.TextBox _workItemTextBox;
-		private System.Windows.Forms.Button _loadButton;
-		private System.Windows.Forms.Button _saveButton;
-		private System.Windows.Forms.Button _changeProjectButton;
-		private System.Windows.Forms.DataGridView _testStepsGridView;
-		private System.Windows.Forms.Label _projectLabel;
-        private System.Windows.Forms.Label _rowLabel;
-        private System.Windows.Forms.Button _insertButton;
-        private System.Windows.Forms.Button _deleteButton;
+		private System.Windows.Forms.ContextMenuStrip _testGridContextMenu;
+		private System.Windows.Forms.ToolStripMenuItem _copyToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem _pasteToolStripMenuItem;
+		private System.Windows.Forms.ToolStripPanel BottomToolStripPanel;
+		private System.Windows.Forms.ToolStrip _bottomToolStrip;
+		private System.Windows.Forms.ToolStripTextBox _findToolStripTextBox;
+		private System.Windows.Forms.ToolStripButton _findToolStripButton;
+		private System.Windows.Forms.ToolStripTextBox _replaceToolStripTextBox;
+		private System.Windows.Forms.ToolStripSplitButton _replaceToolStripSplitButton;
+		private System.Windows.Forms.ToolStripMenuItem _replaceAllToolStripMenuItem;
+		private System.Windows.Forms.ToolStripLabel _testStateToolStripLabel;
+		private System.Windows.Forms.ToolStripPanel TopToolStripPanel;
+		private System.Windows.Forms.ToolStrip _topToolStrip;
+		private System.Windows.Forms.ToolStripLabel _workItemToolStripLabel;
+		private System.Windows.Forms.ToolStripButton _loadToolStripButton;
+		private System.Windows.Forms.ToolStripButton _saveToolStripButton;
+		private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+		private System.Windows.Forms.ToolStripButton _insertStepToolStripButton;
+		private System.Windows.Forms.ToolStripButton _deleteStepToolStripButton;
+		private System.Windows.Forms.ToolStripLabel _connStateToolStripLabel;
+		private System.Windows.Forms.ToolStripButton _changeProjectToolStripButton;
+		private System.Windows.Forms.ToolStripPanel RightToolStripPanel;
+		private System.Windows.Forms.ToolStripPanel LeftToolStripPanel;
+		private System.Windows.Forms.ToolStripContentPanel ContentPanel;
+		private System.Windows.Forms.ToolStripContainer _toolStripContainer;
+		private System.ComponentModel.BackgroundWorker _loadTestBackgroundWorker;
+		private System.ComponentModel.BackgroundWorker _saveTestBackgroundWorker;
+		private System.Windows.Forms.ToolStripLabel _findToolStripLabel;
+		private System.Windows.Forms.ToolStripMenuItem replaceInSelectionToolStripMenuItem;
+		private System.Windows.Forms.TabControl _testTabControl;
+		private System.Windows.Forms.ToolStripComboBox _workItemIdToolStripComboBox;
+		private System.Windows.Forms.ToolStripButton _closeToolStripButton;
 	}
 }
 
