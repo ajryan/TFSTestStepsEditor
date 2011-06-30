@@ -1,16 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Deployment.Application;
+using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Forms;
+using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.Framework.Common;
 using Microsoft.TeamFoundation.TestManagement.Client;
-using Microsoft.TeamFoundation.WorkItemTracking.Client;
 
 namespace TestStepsEditor
 {
 	public partial class MainForm : Form
 	{
-		private ServerSettings _serverSettings;
+		private TfsTeamProjectCollection _tfs;
+		private ITestManagementTeamProject _testProject;
+		private UserPreferences _userPreferences;
 		private readonly Dictionary<int, TestEditInfo> _tabTestInfoMap = new Dictionary<int, TestEditInfo>();
 
 		public MainForm()
@@ -19,38 +25,126 @@ namespace TestStepsEditor
 			
 			_toolStripContainer.Enabled = false;
 
+			_userPreferences = UserPreferences.Load();
+			ApplyUserDisplayPreferences();
+
 			Shown += (
 				(o, e) =>
 				{
 					try
 					{
+						UseWaitCursor = true;
 						_testStateToolStripLabel.Text = "Connecting...";
-
-						_serverSettings = ServerSettings.Load();
-						if (_serverSettings.TestProject != null)
-			         		_connStateToolStripLabel.Text = _serverSettings.TestProject.WitProject.Name;
-
-						_toolStripContainer.Enabled = true;
-
-						_workItemIdToolStripComboBox.ComboBox.DataSource = _serverSettings.WorkItemIdMru;
-						_workItemIdToolStripComboBox.Focus();
-
+						Application.DoEvents();
+						
+						ApplyUserServerPreferences();
 						_testStateToolStripLabel.Text = "Connected.";
+
+						_workItemIdToolStripComboBox.Focus();
+						_toolStripContainer.Enabled = true;
 					}
 					catch (Exception ex)
 					{
 						_toolStripContainer.Enabled = true;
 
-						MessageBox.Show("Could not load previous TFS connection.\n\nError:\n" + ex.Message);
-						_connStateToolStripLabel.Text = "(not connected)";
+						MessageBox.Show("Could not load previous TFS connection.\n\nError:\n" + ex.Message, "Error Restoring Previous Connection");
+						
+						_changeProjectToolStripButton.Text = "(not connected)";
+						_testStateToolStripLabel.Text = String.Empty;
+
+						_userPreferences.TfsUri = null;
+						_userPreferences.TestProject = null;
+
+					}
+					finally
+					{
+						UseWaitCursor = false;
 					}
 				});
+		}
+
+		private void ApplyUserServerPreferences()
+		{
+			if (_userPreferences == null ||
+				_userPreferences.TfsUri == null ||
+				String.IsNullOrEmpty(_userPreferences.TestProject))
+			{
+				return;
+			}
+
+			_tfs = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(_userPreferences.TfsUri);
+			_tfs.Connect(ConnectOptions.IncludeServices);
+			_testProject = _tfs.GetService<ITestManagementService>().GetTeamProject(_userPreferences.TestProject);
+
+			_changeProjectToolStripButton.Text = _userPreferences.TestProject;
+		}
+
+		private void ApplyUserDisplayPreferences()
+		{
+			if (_userPreferences == null)
+				return;
+
+			_workItemIdToolStripComboBox.ComboBox.DataSource = _userPreferences.WorkItemIdMru;
+
+			// if the saved location + size is not fully on-screen, do not override defaults
+			bool useSavedLocation = false;
+			if (_userPreferences.WindowSize.HasValue && _userPreferences.WindowLocation.HasValue)
+			{
+				Rectangle savedPosition = new Rectangle(
+					_userPreferences.WindowLocation.Value.X,
+					_userPreferences.WindowLocation.Value.Y,
+					_userPreferences.WindowSize.Value.Width,
+					_userPreferences.WindowSize.Value.Height);
+
+				useSavedLocation = Screen.AllScreens.Any(screen => screen.WorkingArea.Contains(savedPosition));
+			}
+
+			if (useSavedLocation)
+			{
+				if (_userPreferences.WindowSize.Value.Height == -1)
+					WindowState = FormWindowState.Maximized;
+				else
+					Size = _userPreferences.WindowSize.Value;
+			
+				StartPosition = FormStartPosition.Manual;
+				Location = _userPreferences.WindowLocation.Value;
+			}
+
+			if (_userPreferences.WorkItemToolbarTop.HasValue && _userPreferences.WorkItemToolbarTop.Value)
+			{
+				if (_toolStripContainer.BottomToolStripPanel.Contains(_witToolStrip))
+				{
+					_toolStripContainer.BottomToolStripPanel.Controls.Remove(_witToolStrip);
+					_toolStripContainer.TopToolStripPanel.Controls.Add(_witToolStrip);
+				}
+			}
+
+			if (_userPreferences.FindToolbarTop.HasValue && _userPreferences.FindToolbarTop.Value)
+			{
+				if (_toolStripContainer.BottomToolStripPanel.Contains(_findToolStrip))
+				{
+					_toolStripContainer.BottomToolStripPanel.Controls.Remove(_findToolStrip);
+
+					// remove and re-add wit toolstrip so it stays on top
+					bool witTop = _toolStripContainer.TopToolStripPanel.Contains(_witToolStrip);
+					if (witTop)
+						_toolStripContainer.TopToolStripPanel.Controls.Remove(_witToolStrip);
+
+					_toolStripContainer.TopToolStripPanel.Controls.Add(_findToolStrip);
+
+					if (witTop)
+						_toolStripContainer.TopToolStripPanel.Controls.Add(_witToolStrip);
+				}
+			}
 		}
 
 		private DataGridView CurrentGridView
 		{
 			get
 			{
+				if (_testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
+					return null;
+
 				return _tabTestInfoMap[_testTabControl.SelectedIndex].DataGridView;
 			}
 		}
@@ -59,61 +153,94 @@ namespace TestStepsEditor
 		{
 			get
 			{
+				if (_testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
+					return null;
+
 				return _tabTestInfoMap[_testTabControl.SelectedIndex].SimpleSteps;
 			}
 		}
+
+		private const int MENU_ALWAYS_ON_TOP = 0x1;
+		private const int MENU_ABOUT = 0x2;
 
 		protected override void OnHandleCreated(EventArgs e)
 		{
 			base.OnHandleCreated(e);
 
-			IntPtr hSysMenu = Win32.GetSystemMenu(this.Handle, false);
-			Win32.AppendMenu(hSysMenu, Win32.MF_SEPARATOR, 0, string.Empty);
-			Win32.AppendMenu(hSysMenu, Win32.MF_STRING, 0x1, "Toggle &Always On Top");
+			IntPtr hSysMenu = NativeMethods.GetSystemMenu(this.Handle, false);
+			NativeMethods.AppendMenu(hSysMenu, NativeMethods.MF_SEPARATOR, new IntPtr(0), string.Empty);
+			NativeMethods.AppendMenu(hSysMenu, NativeMethods.MF_STRING, new IntPtr(MENU_ALWAYS_ON_TOP), "Toggle &Always On Top");
+			NativeMethods.AppendMenu(hSysMenu, NativeMethods.MF_STRING, new IntPtr(MENU_ABOUT), "About &TestStepsEditor...");
 		}
 
 		protected override void WndProc(ref Message m)
 		{
 			base.WndProc(ref m);
 
-			if (m.Msg == Win32.WM_SYSCOMMAND && (int)m.WParam == 0x1)
+			if (m.Msg != NativeMethods.WM_SYSCOMMAND)
+				return;
+
+			switch ((int)m.WParam)
 			{
-				this.TopMost = !this.TopMost;
+				case MENU_ALWAYS_ON_TOP:
+					this.TopMost = !this.TopMost;
+					break;
+
+				case MENU_ABOUT:
+					{
+						string version = ApplicationDeployment.IsNetworkDeployed
+							? ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString()
+							: Assembly.GetExecutingAssembly().GetName().Version.ToString();
+						
+						MessageBox.Show(
+							"Lonza TFS Test Steps Editor\r\nVersion: " + version,
+							"About TFS Test Steps Editor");
+
+						break;
+					}
 			}
 		}
 
 		protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
 		{
-			bool handled = false;
-
-			if (msg.Msg == 256)
+			if (msg.Msg != 256)
+				return base.ProcessCmdKey(ref msg, keyData);
+			
+			if (keyData == Keys.F3)
 			{
-				if (keyData == Keys.F3)
-				{
-					_findToolStripButton.PerformClick();
-				}
-				else
-				{
-					Component focusedComponent = Win32.GetFocusedControl();
-
-					if ((keyData & Keys.V) == Keys.V &&
-					    ModifierKeys == Keys.Control &&
-					    focusedComponent == CurrentGridView)
-					{
-						PasteClipboard();
-						handled = true;
-					}
-
-					if ((keyData & Keys.S) == Keys.S &&
-						ModifierKeys == Keys.Control)
-					{
-						_saveToolStripButton.PerformClick();
-						handled = true;
-					}
-				}
+				_findToolStripButton.PerformClick();
+				return true;
 			}
 
-			return handled || base.ProcessCmdKey(ref msg, keyData);
+			if (keyData == Keys.Escape)
+			{
+				if (CurrentGridView != null)
+					CurrentGridView.Focus();
+				return true;
+			}
+				
+			Component focusedComponent = NativeMethods.GetFocusedControl();
+
+			if (keyData == (Keys.V | Keys.Control) &&
+				focusedComponent == CurrentGridView)
+			{
+				PasteClipboard();
+				return true;
+			}
+
+			if (keyData == (Keys.S | Keys.Control))
+			{
+				_saveToolStripButton.PerformClick();
+				return true;
+			}
+
+			if (keyData == (Keys.F | Keys.Control))
+			{
+				_findToolStripTextBox.Focus();
+				return true;
+			}
+
+			return base.ProcessCmdKey(ref msg, keyData);
 		}
 
 		#region Event handlers
@@ -127,7 +254,7 @@ namespace TestStepsEditor
 
 				var confirmExit = MessageBox.Show(
 					"One or more open tests has not been saved. Are you sure you want to exit?",
-					"Confirm exit",
+					"Confirm Exit",
 					MessageBoxButtons.YesNo,
 					MessageBoxIcon.Question,
 					MessageBoxDefaultButton.Button2);
@@ -135,7 +262,21 @@ namespace TestStepsEditor
 				if (confirmExit == DialogResult.No)
 					e.Cancel = true;
 
-				return;
+				break;
+			}
+
+			if (!e.Cancel)
+			{
+				_userPreferences.FindToolbarTop = _toolStripContainer.TopToolStripPanel.Contains(_findToolStrip);
+				_userPreferences.WorkItemToolbarTop = _toolStripContainer.TopToolStripPanel.Contains(_witToolStrip);
+
+				if (WindowState != FormWindowState.Minimized)
+				{
+					_userPreferences.WindowLocation = Location;
+					_userPreferences.WindowSize = WindowState == FormWindowState.Maximized ? new Size(-1, -1) : Size;
+				}
+
+				_userPreferences.SaveToRegistry();
 			}
 		}
 
@@ -148,7 +289,7 @@ namespace TestStepsEditor
 			{
 				var sureClose = MessageBox.Show(
 					"The test case has been modified. Are you sure you want to close?",
-					"Confirm close",
+					"Confirm Close",
 					MessageBoxButtons.YesNo,
 					MessageBoxIcon.Question,
 					MessageBoxDefaultButton.Button2);
@@ -172,9 +313,15 @@ namespace TestStepsEditor
 
 		private void SaveButton_Click(object sender, EventArgs e)
 		{
+			if (_testTabControl.TabCount < 1)
+				return;
+
 			_testStateToolStripLabel.Text = "Saving...";
 			_toolStripContainer.Enabled = false;
-			
+
+			CurrentGridView.EndEdit();
+			UseWaitCursor = true;
+
 			_saveTestBackgroundWorker.RunWorkerAsync(
 				_tabTestInfoMap[_testTabControl.SelectedIndex]);
 		}
@@ -193,6 +340,14 @@ namespace TestStepsEditor
 				int stepNumber = 0;
 				foreach (SimpleStep step in simpleSteps)
 				{
+					// do not save empty final step
+					if (stepNumber == simpleSteps.Count - 1 &&
+						String.IsNullOrEmpty(step.Title) &&
+						String.IsNullOrEmpty(step.ExpectedResult))
+					{
+						break;
+					}
+
 					if (testCase.Actions.Count <= stepNumber)
 					{
 						testCase.Actions.Add(testCase.CreateTestStep());
@@ -243,12 +398,14 @@ namespace TestStepsEditor
 		private void SaveTestBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
 			_toolStripContainer.Enabled = true;
+			UseWaitCursor = false;
+			CurrentGridView.Focus();
 
 			string result = e.Result as string;
 			if (!String.IsNullOrWhiteSpace(result))
 			{
 				_testStateToolStripLabel.Text = "Error.";
-				MessageBox.Show(result, "Error saving test case.");
+				MessageBox.Show(result, "Error Saving Test Case");
 			}
 			else
 			{
@@ -258,6 +415,9 @@ namespace TestStepsEditor
 
 		private void LoadButton_Click(object sender, EventArgs e)
 		{
+			if (_testProject == null)
+				return;
+
 			int workItemId;
 			if (!Int32.TryParse(_workItemIdToolStripComboBox.Text, out workItemId))
 				return;
@@ -267,12 +427,14 @@ namespace TestStepsEditor
 				if (testEditKvp.Value.WorkItemId == workItemId)
 				{
 					_testTabControl.SelectedIndex = testEditKvp.Key;
+					CurrentGridView.Focus();
 					return;
 				}
 			}
 
 			_testStateToolStripLabel.Text = "Loading...";
 			_toolStripContainer.Enabled = false;
+			UseWaitCursor = true;
 
 			_loadTestBackgroundWorker.RunWorkerAsync(new TestEditInfo(workItemId));
 		}
@@ -284,13 +446,13 @@ namespace TestStepsEditor
 			try
 			{
 				testInfo.TestCase =
-					_serverSettings.TestProject.TestCases.Find(testInfo.WorkItemId)
-					?? (ITestBase) _serverSettings.TestProject.SharedSteps.Find(testInfo.WorkItemId);
+					_testProject.TestCases.Find(testInfo.WorkItemId) ??
+					(ITestBase) _testProject.SharedSteps.Find(testInfo.WorkItemId);
 
 				if (testInfo.TestCase == null)
 					testInfo.Message = "Input test case ID not found.";
 			}
-			catch (DeniedOrNotExistException ex)
+			catch (Exception ex)
 			{
 				testInfo.Message = "Could not load test case: " + ex.Message;
 			}
@@ -306,19 +468,26 @@ namespace TestStepsEditor
 				_toolStripContainer.Enabled = true;
 				_testStateToolStripLabel.Text = "Error.";
 
-				MessageBox.Show(testInfo.Message, "Could not load test case");
+				MessageBox.Show(testInfo.Message, "Error Loading Test Case");
+				UseWaitCursor = false;
 				return;
 			}
 
 			SimpleSteps newSteps = TryCreateSimpleSteps(testInfo);
 			if (newSteps == null)
+			{
+				UseWaitCursor = false;
 				return;
+			}
 
 			testInfo.SimpleSteps = newSteps;
 			
 			var newDataGridView = CreateTestTabAndDataGridView(testInfo.TestCase.Id + " " + testInfo.TestCase.Title);
 			if (newDataGridView == null)
+			{
+				UseWaitCursor = false;
 				return;
+			}
 
 			try
 			{
@@ -328,45 +497,57 @@ namespace TestStepsEditor
 
 				newDataGridView.DataSource = testInfo.SimpleSteps;
 
-				_toolStripContainer.Enabled = true;
-				newDataGridView.ResumeLayout(true);
-
 				newDataGridView.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
 				newDataGridView.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
+				newDataGridView.Columns[2].SortMode = DataGridViewColumnSortMode.NotSortable;
 
+				newDataGridView.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+				newDataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+				newDataGridView.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+				newDataGridView.Columns[2].Width = 40;
+
+				newDataGridView.ResumeLayout(true);
+
+				_toolStripContainer.Enabled = true;
+				UseWaitCursor = false;
 				newDataGridView.Focus();
 
 				int newTabIndex = _testTabControl.TabCount - 1;
 				_tabTestInfoMap[newTabIndex] = testInfo;
 
 				_testStateToolStripLabel.Text = "Loaded.";
-				_workItemIdToolStripComboBox.SelectedIndex = -1;
 
-				_serverSettings.AddWorkItemIdMru(testInfo.TestCase.Id);
-				_serverSettings.SaveToRegistry();
+				_userPreferences.AddWorkItemIdMru(testInfo.TestCase.Id);
+				_userPreferences.SaveToRegistry();
+				
+				_workItemIdToolStripComboBox.Text = String.Empty;
 			}
 			catch (Exception ex)
 			{
 				MessageBox.Show(
 					"Could not display test case: " + ex.Message,
-					"Error displaying test case");
+					"Error Displaying Test Case");
 
 				_testTabControl.TabPages.RemoveAt(_testTabControl.TabCount - 1);
+			}
+			finally
+			{
+				UseWaitCursor = false;
 			}
 		}
 
 		private void ChangeProjectButton_Click(object sender, EventArgs e)
 		{
-			var newServerSettings = ServerSettings.LoadProjectSelectionFromUser();
+			var newServerSettings = UserPreferences.LoadProjectSelectionFromUser();
 			if (newServerSettings == null)
 				return;
 
-			_serverSettings = newServerSettings;
+			_userPreferences = newServerSettings;
 
-			_workItemIdToolStripComboBox.ComboBox.DataSource = _serverSettings.WorkItemIdMru;
+			_workItemIdToolStripComboBox.ComboBox.DataSource = _userPreferences.WorkItemIdMru;
 
-			if (_serverSettings.TestProject != null)
-				_connStateToolStripLabel.Text = _serverSettings.TestProject.WitProject.Name;
+			if (_userPreferences.TestProject != null)
+				_changeProjectToolStripButton.Text = _userPreferences.TestProject;
 
 			_tabTestInfoMap.Clear();
 			_testTabControl.TabPages.Clear();
@@ -395,13 +576,12 @@ namespace TestStepsEditor
 
 		private void InsertButton_Click(object sender, EventArgs e)
 		{
-			if (CurrentGridView == null || CurrentGridView.CurrentRow == null)
-				return;
-			
-			_tabTestInfoMap[_testTabControl.SelectedIndex]
-				.SimpleSteps.Insert(CurrentGridView.CurrentRow.Index, new SimpleStep());
+			InsertStep();
+		}
 
-			CurrentGridView.Focus();
+		private void InsertBelowButton_Click(object sender, EventArgs e)
+		{
+			InsertStep(true);
 		}
 
 		private void DeleteButton_Click(object sender, EventArgs e)
@@ -409,24 +589,27 @@ namespace TestStepsEditor
 			if (CurrentGridView == null || CurrentGridView.CurrentRow == null)
 				return;
 
-			_tabTestInfoMap[_testTabControl.SelectedIndex]
-				.SimpleSteps.RemoveAt(CurrentGridView.CurrentRow.Index);
+			int currentCol = CurrentGridView.CurrentCell.ColumnIndex;
+			int removeIndex = CurrentGridView.CurrentRow.Index;
 
+			CurrentSimpleSteps.RemoveAt(removeIndex);
+
+			if (CurrentGridView.RowCount == 0)
+				return;
+
+			int focusRow = Math.Min(CurrentGridView.RowCount - 1, removeIndex);
+			CurrentGridView.CurrentCell = CurrentGridView[currentCol, focusRow];
 			CurrentGridView.Focus();
 		}
 
 		private void FindButton_Click(object sender, EventArgs e)
 		{
-			string findText = _findToolStripTextBox.Text.Trim();
-			if (String.IsNullOrEmpty(findText))
-				return;
-
 			var searcher = new DataGridViewSearcher(CurrentGridView);
 
-			bool found = searcher.Search(findText);
+			bool notFound = searcher.Search(_findToolStripTextBox.Text) == DataGridViewSearcher.Result.NotMatched;
 			
-			if (!found)
-				MessageBox.Show("\"" + findText + "\" was not found.", "Not Found");
+			if (notFound)
+				MessageBox.Show("\"" + _findToolStripTextBox.Text + "\" was not found.", "Not Found");
 		}
 
 		private void ReplaceAllButton_Click(object sender, EventArgs e)
@@ -454,23 +637,70 @@ namespace TestStepsEditor
 			PasteClipboard();
 		}
 
-#endregion Event handlers
+		private void StringGeneratorButton_Click(object sender, EventArgs e)
+		{
+			using (var strGenForm = new StringGeneratorForm())
+			{
+				if (CurrentGridView != null && CurrentGridView.CurrentCell != null && CurrentGridView.CurrentRow != null)
+				{
+					strGenForm.StartPosition = FormStartPosition.Manual;
+
+					var currentCellRect = CurrentGridView.GetCellDisplayRectangle(
+						CurrentGridView.CurrentCell.ColumnIndex,
+						CurrentGridView.CurrentRow.Index,
+						false);
+
+					strGenForm.Location = CurrentGridView.PointToScreen(
+						new Point(currentCellRect.Left + 4, currentCellRect.Bottom + 4));
+				}
+
+				strGenForm.ShowDialog(this);
+			}
+		}
+
+		#endregion Event handlers
+
+		private void InsertStep(bool below = false)
+		{
+			if (CurrentGridView == null)
+				return;
+
+			int insertRow = -1;
+
+			if (CurrentGridView.CurrentRow != null)
+			{
+				insertRow = CurrentGridView.CurrentRow.Index;
+			}
+
+			if (below && insertRow != -1)
+				insertRow++;
+
+			int currentCol = insertRow == -1? 0 : CurrentGridView.CurrentCell.ColumnIndex;
+
+			if (insertRow != -1)
+			{
+				CurrentSimpleSteps.Insert(insertRow, new SimpleStep());
+			}
+			else
+			{
+				CurrentSimpleSteps.AddNew();
+				insertRow = 0;
+			}
+
+			CurrentGridView.CurrentCell = CurrentGridView[currentCol, insertRow];
+			CurrentGridView.Focus();
+		}
 
 		private void ReplaceInCells(bool selectedOnly)
 		{
-			string findText = _findToolStripTextBox.Text.Trim();
-			if (String.IsNullOrEmpty(findText))
-				return;
-
-			string replaceText = _replaceToolStripTextBox.Text.Trim();
-			if (String.IsNullOrEmpty(replaceText))
-				return;
-
 			var searcher = new DataGridViewSearcher(CurrentGridView);
-			bool replaced = searcher.Replace(findText, replaceText, selectedOnly);
+			bool notReplaced = searcher.Replace(
+				_findToolStripTextBox.Text, 
+				_replaceToolStripTextBox.Text,
+				selectedOnly) == DataGridViewSearcher.Result.NotMatched;
 
-			if (!replaced)
-				MessageBox.Show("\"" + findText + "\" was not found.", "No Replacements Performed");
+			if (notReplaced)
+				MessageBox.Show("\"" + _findToolStripTextBox.Text + "\" was not found.", "No Replacements Performed");
 		}
 
 		private static SimpleSteps TryCreateSimpleSteps(TestEditInfo testInfo)
@@ -502,7 +732,7 @@ namespace TestStepsEditor
 			{
 				MessageBox.Show(
 					"Could not load steps from test case: " + ex.Message,
-					"Could not load test case");
+					"Error Loading Test Case");
 
 				return null;
 			}
@@ -515,7 +745,7 @@ namespace TestStepsEditor
 			var newDataGridView = new NumberedDataGridView
 			{
 				Dock = DockStyle.Fill,
-				AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+				AllowUserToAddRows = false,
 				AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCellsExceptHeaders,
 				ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText,
 				ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
@@ -561,10 +791,17 @@ namespace TestStepsEditor
 					rowIndex = selectedCells.Min(c => c.RowIndex);
 					colIndex = selectedCells.Min(c => c.ColumnIndex);
 				}
-				
+
 				string[] clipboardLines = clipboardText.Split(new []{'\n'}, StringSplitOptions.RemoveEmptyEntries);
 				foreach (string clipboardLine in clipboardLines)
 				{
+					bool addedRow = false;
+					if (rowIndex == CurrentGridView.RowCount)
+					{
+						CurrentSimpleSteps.AddNew();
+						addedRow = true;
+					}
+
 					if (rowIndex >= CurrentGridView.RowCount || clipboardLine.Length <= 0)
 						break;
 					
@@ -575,18 +812,25 @@ namespace TestStepsEditor
 							break;
 						
 						DataGridViewCell targetCell = CurrentGridView[colIndex + tokenIndex, rowIndex];
-						if (targetCell.Value.ToString() != clipboardLineTokens[tokenIndex])
+
+						// done pasting when we reach an unselected cell, except when we added the row
+						if (!targetCell.Selected && !addedRow)
+							return;
+
+						if (targetCell.Value == null || 
+							(targetCell.Value.ToString() != clipboardLineTokens[tokenIndex]))
 						{
 							targetCell.Value = Convert.ChangeType(
 								clipboardLineTokens[tokenIndex], targetCell.ValueType);
 						}
 					}
+
 					rowIndex++;
 				}
 			}
 			catch (FormatException)
 			{
-				MessageBox.Show("The pasted data is in the wrong format for the target cell(s)");
+				MessageBox.Show("The pasted data is in the wrong format for the target cell(s)", "Cannot Paste");
 			}
 		}
 	}

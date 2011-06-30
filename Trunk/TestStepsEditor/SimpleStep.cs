@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Linq;
 
 namespace TestStepsEditor
 {
@@ -10,7 +9,11 @@ namespace TestStepsEditor
 
 		public string Title
 		{
-			get { return _title; }
+			get
+			{
+				return _title;
+			}
+
 			set
 			{
 				if (_originalTitle == null)
@@ -24,7 +27,11 @@ namespace TestStepsEditor
 
 		public string ExpectedResult
 		{
-			get { return _expectedResult; }
+			get
+			{
+				return _expectedResult;
+			}
+
 			set
 			{
 				if (_originalExpectedResult == null)
@@ -35,6 +42,8 @@ namespace TestStepsEditor
 		}
 		private string _expectedResult;
 		private string _originalExpectedResult;
+
+		public bool Done { get; set; }
 
 		[Browsable(false)]
 		public bool Dirty
@@ -47,17 +56,17 @@ namespace TestStepsEditor
 			}
 		}
 
-        public SimpleStep()
-        {
-            Title = String.Empty;
-            ExpectedResult = String.Empty;
-        }
+		public SimpleStep()
+		{
+			Title = String.Empty;
+			ExpectedResult = String.Empty;
+		}
 
 		public SimpleStep(string title, string expectedResult, bool isTestStep = true)
 		{
-			_isTestStep = isTestStep;
 			_title = title.Replace("\n", "\r\n");
 			_expectedResult = expectedResult.Replace("\n", "\r\n");
+			_isTestStep = isTestStep;
 		}
 
 		public bool IsTestStep()
@@ -69,35 +78,6 @@ namespace TestStepsEditor
 		{
 			_originalTitle = null;
 			_originalExpectedResult = null;
-		}
-	}
-
-	public class SimpleSteps : BindingList<SimpleStep>
-	{
-		private readonly int _originalCount;
-
-		public SimpleSteps(int originalCount)
-		{
-			_originalCount = originalCount;
-
-		}
-		
-		public bool Dirty
-		{
-			get
-			{
-				return 
-					_originalCount != this.Count ||
-					this.Any(simpleStep => simpleStep.Dirty);
-			}
-		}
-
-		public void ResetDirtyState()
-		{
-			foreach (var simpleStep in this)
-			{
-				simpleStep.ResetDirtyState();
-			}
 		}
 	}
 }

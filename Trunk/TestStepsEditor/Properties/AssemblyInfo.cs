@@ -5,9 +5,8 @@
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Lonza")]
 [assembly: AssemblyProduct("TestStepsEditor")]
-[assembly: AssemblyCopyright("Copyright © Lonza BioScience 2010")]
+[assembly: AssemblyCopyright("Copyright © Lonza BioScience 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
-[assembly: AssemblyVersion("1.5.0.*")]
-[assembly: AssemblyFileVersion("1.5.0.0")]
+[assembly: AssemblyVersion("1.6.0.*")]

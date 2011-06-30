@@ -5,6 +5,13 @@ namespace TestStepsEditor
 {
 	public class DataGridViewSearcher
 	{
+		public enum Result
+		{
+			Aborted,
+			Matched,
+			NotMatched
+		}
+
 		private readonly DataGridView _grid;
 
 		public DataGridViewSearcher(DataGridView grid)
@@ -12,34 +19,42 @@ namespace TestStepsEditor
 			_grid = grid;
 		}
 
-		private static bool CellContainsText(DataGridViewCell cell, string text)
+		public Result Search(string findText)
 		{
-			return cell.Value != null && cell.Value.ToString().ToUpper().Contains(text.ToUpper());
+			if (_grid == null || _grid.CurrentCell == null || String.IsNullOrEmpty(findText))
+				return Result.Aborted;
+
+			bool found = PerformOnCells(
+				_grid.CurrentCell,
+				false,
+				true,
+				cell =>
+				{
+					if (CellContainsText(cell, findText))
+					{
+						_grid.CurrentCell = cell;
+						_grid.BeginEdit(false);
+
+						string cellText = cell.Value as string;
+						int foundTextIndex = cellText.IndexOf(findText, StringComparison.OrdinalIgnoreCase);
+
+						(_grid.EditingControl as TextBox).SelectionStart = foundTextIndex;
+						(_grid.EditingControl as TextBox).SelectionLength = findText.Length;
+
+						return true;
+					}
+					return false;
+				});
+
+			return found ? Result.Matched : Result.NotMatched;
 		}
 
-		public bool Search(string findText)
+		public Result Replace(string findText, string replaceText, bool selectedOnly)
 		{
-			if (_grid == null || _grid.CurrentCell == null)
-				return false;
+			if (_grid == null || _grid.RowCount < 1 || String.IsNullOrEmpty(findText))
+				return Result.Aborted;
 
-			return PerformOnCells(
-			   _grid.CurrentCell,
-			   false,
-			   true,
-			   cell =>
-			   {
-				   if (CellContainsText(cell, findText))
-				   {
-					   _grid.CurrentCell = cell;
-					   return true;
-				   }
-				   return false;
-			   });
-		}
-
-		public bool Replace(string findText, string replaceText, bool selectedOnly)
-		{
-			return PerformOnCells(
+			bool replaced = PerformOnCells(
 				_grid[0, 0],	// process entire grid
 				true,			// include start cell
 				false,			// do not stop on first action
@@ -56,6 +71,8 @@ namespace TestStepsEditor
 					}
 					return false;
 				});
+
+			return replaced ? Result.Matched : Result.NotMatched;
 		}
 
 		/// <summary>
@@ -94,6 +111,11 @@ namespace TestStepsEditor
 			}
 
 			return performed;
+		}
+
+		private static bool CellContainsText(DataGridViewCell cell, string text)
+		{
+			return cell.Value != null && cell.Value.ToString().ToUpper().Contains(text.ToUpper());
 		}
 	}
 }
