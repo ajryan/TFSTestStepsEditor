@@ -38,7 +38,7 @@ namespace TestStepsEditor
 						Application.DoEvents();
 						
 						ApplyUserServerPreferences();
-						_testStateToolStripLabel.Text = "Connected.";
+						_testStateToolStripLabel.Text = _testProject != null? "Connected." : String.Empty;
 
 						_workItemIdToolStripComboBox.Focus();
 						_toolStripContainer.Enabled = true;
