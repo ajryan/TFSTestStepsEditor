@@ -33,6 +33,11 @@
 			this._testGridContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this._copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this._pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+			this._deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+			this._insertAboveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._insertBelowToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.BottomToolStripPanel = new System.Windows.Forms.ToolStripPanel();
 			this._findToolStrip = new System.Windows.Forms.ToolStrip();
 			this._findToolStripLabel = new System.Windows.Forms.ToolStripLabel();
@@ -78,23 +83,59 @@
 			// 
 			this._testGridContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._copyToolStripMenuItem,
-            this._pasteToolStripMenuItem});
+            this._pasteToolStripMenuItem,
+            this._toolStripSeparator1,
+            this._deleteToolStripMenuItem,
+            this._toolStripSeparator2,
+            this._insertAboveToolStripMenuItem,
+            this._insertBelowToolStripMenuItem});
 			this._testGridContextMenu.Name = "_testGridContextMenu";
-			this._testGridContextMenu.Size = new System.Drawing.Size(103, 48);
+			this._testGridContextMenu.Size = new System.Drawing.Size(141, 126);
 			// 
 			// _copyToolStripMenuItem
 			// 
 			this._copyToolStripMenuItem.Name = "_copyToolStripMenuItem";
-			this._copyToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
+			this._copyToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
 			this._copyToolStripMenuItem.Text = "&Copy";
 			this._copyToolStripMenuItem.Click += new System.EventHandler(this.TestGridContext_Copy_Click);
 			// 
 			// _pasteToolStripMenuItem
 			// 
 			this._pasteToolStripMenuItem.Name = "_pasteToolStripMenuItem";
-			this._pasteToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
+			this._pasteToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
 			this._pasteToolStripMenuItem.Text = "&Paste";
 			this._pasteToolStripMenuItem.Click += new System.EventHandler(this.TestGridContext_Paste_Click);
+			// 
+			// _toolStripSeparator1
+			// 
+			this._toolStripSeparator1.Name = "_toolStripSeparator1";
+			this._toolStripSeparator1.Size = new System.Drawing.Size(137, 6);
+			// 
+			// _deleteToolStripMenuItem
+			// 
+			this._deleteToolStripMenuItem.Name = "_deleteToolStripMenuItem";
+			this._deleteToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+			this._deleteToolStripMenuItem.Text = "&Delete";
+			this._deleteToolStripMenuItem.Click += new System.EventHandler(this.TestGridContext_Delete_Click);
+			// 
+			// _toolStripSeparator2
+			// 
+			this._toolStripSeparator2.Name = "_toolStripSeparator2";
+			this._toolStripSeparator2.Size = new System.Drawing.Size(137, 6);
+			// 
+			// _insertAboveToolStripMenuItem
+			// 
+			this._insertAboveToolStripMenuItem.Name = "_insertAboveToolStripMenuItem";
+			this._insertAboveToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+			this._insertAboveToolStripMenuItem.Text = "Insert &Above";
+			this._insertAboveToolStripMenuItem.Click += new System.EventHandler(this.TestGridContext_InsertAbove_Click);
+			// 
+			// _insertBelowToolStripMenuItem
+			// 
+			this._insertBelowToolStripMenuItem.Name = "_insertBelowToolStripMenuItem";
+			this._insertBelowToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+			this._insertBelowToolStripMenuItem.Text = "Insert &Below";
+			this._insertBelowToolStripMenuItem.Click += new System.EventHandler(this.TestGrid_InsertBelow_Click);
 			// 
 			// BottomToolStripPanel
 			// 
@@ -272,9 +313,10 @@
 			this._insertStepToolStripSplitButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.insertStepToolStripMenuItem,
             this.insertStepBelowToolStripMenuItem});
+			this._insertStepToolStripSplitButton.Image = ((System.Drawing.Image)(resources.GetObject("_insertStepToolStripSplitButton.Image")));
 			this._insertStepToolStripSplitButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 			this._insertStepToolStripSplitButton.Name = "_insertStepToolStripSplitButton";
-			this._insertStepToolStripSplitButton.Size = new System.Drawing.Size(78, 22);
+			this._insertStepToolStripSplitButton.Size = new System.Drawing.Size(94, 22);
 			this._insertStepToolStripSplitButton.Text = "&Insert Step";
 			this._insertStepToolStripSplitButton.ButtonClick += new System.EventHandler(this.InsertButton_Click);
 			// 
@@ -460,6 +502,11 @@
 		private System.Windows.Forms.ToolStripButton _stringGeneratorToolStripButton;
 		private System.Windows.Forms.ToolStripMenuItem insertStepToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem insertStepBelowToolStripMenuItem;
+		private System.Windows.Forms.ToolStripSeparator _toolStripSeparator1;
+		private System.Windows.Forms.ToolStripMenuItem _deleteToolStripMenuItem;
+		private System.Windows.Forms.ToolStripSeparator _toolStripSeparator2;
+		private System.Windows.Forms.ToolStripMenuItem _insertAboveToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem _insertBelowToolStripMenuItem;
 	}
 }
 

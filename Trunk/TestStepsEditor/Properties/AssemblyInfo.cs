@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("TestStepsEditor")]
 [assembly: AssemblyDescription("TFS 2010 Test Case steps editor")]
@@ -10,3 +11,4 @@
 [assembly: AssemblyCulture("")]
 
 [assembly: AssemblyVersion("1.6.0.*")]
+[assembly: ComVisible(false)]

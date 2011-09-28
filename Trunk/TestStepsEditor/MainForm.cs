@@ -14,6 +14,16 @@ namespace TestStepsEditor
 {
 	public partial class MainForm : Form
 	{
+		private enum InsertLocation
+		{
+			Above,
+			Below
+		}
+
+		private const int TITLE_COLUMN = 0;
+		private const int EXPECTED_RESULT_COLUMN = 1;
+		private const int DONE_COLUMN = 2;
+
 		private TfsTeamProjectCollection _tfs;
 		private ITestManagementTeamProject _testProject;
 		private UserPreferences _userPreferences;
@@ -313,7 +323,7 @@ namespace TestStepsEditor
 
 		private void SaveButton_Click(object sender, EventArgs e)
 		{
-			if (_testTabControl.TabCount < 1)
+			if (_testTabControl.TabCount < 1 || CurrentGridView == null)
 				return;
 
 			_testStateToolStripLabel.Text = "Saving...";
@@ -497,14 +507,14 @@ namespace TestStepsEditor
 
 				newDataGridView.DataSource = testInfo.SimpleSteps;
 
-				newDataGridView.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
-				newDataGridView.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
-				newDataGridView.Columns[2].SortMode = DataGridViewColumnSortMode.NotSortable;
+				newDataGridView.Columns[TITLE_COLUMN].SortMode = DataGridViewColumnSortMode.NotSortable;
+				newDataGridView.Columns[EXPECTED_RESULT_COLUMN].SortMode = DataGridViewColumnSortMode.NotSortable;
+				newDataGridView.Columns[DONE_COLUMN].SortMode = DataGridViewColumnSortMode.NotSortable;
 
-				newDataGridView.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-				newDataGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-				newDataGridView.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-				newDataGridView.Columns[2].Width = 40;
+				newDataGridView.Columns[TITLE_COLUMN].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+				newDataGridView.Columns[EXPECTED_RESULT_COLUMN].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+				newDataGridView.Columns[DONE_COLUMN].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+				newDataGridView.Columns[DONE_COLUMN].Width = 40;
 
 				newDataGridView.ResumeLayout(true);
 
@@ -546,8 +556,8 @@ namespace TestStepsEditor
 
 			_workItemIdToolStripComboBox.ComboBox.DataSource = _userPreferences.WorkItemIdMru;
 
-			if (_userPreferences.TestProject != null)
-				_changeProjectToolStripButton.Text = _userPreferences.TestProject;
+			if (!String.IsNullOrEmpty(_userPreferences.TestProject))
+				ApplyUserServerPreferences();
 
 			_tabTestInfoMap.Clear();
 			_testTabControl.TabPages.Clear();
@@ -576,34 +586,30 @@ namespace TestStepsEditor
 
 		private void InsertButton_Click(object sender, EventArgs e)
 		{
-			InsertStep();
+			if (CurrentGridView == null)
+				return;
+
+			InsertStep(CurrentGridView.CurrentRow, InsertLocation.Above);
 		}
 
 		private void InsertBelowButton_Click(object sender, EventArgs e)
 		{
-			InsertStep(true);
+			if (CurrentGridView == null)
+				return;
+
+			InsertStep(CurrentGridView.CurrentRow, InsertLocation.Below);
 		}
 
 		private void DeleteButton_Click(object sender, EventArgs e)
 		{
-			if (CurrentGridView == null || CurrentGridView.CurrentRow == null)
-				return;
-
-			int currentCol = CurrentGridView.CurrentCell.ColumnIndex;
-			int removeIndex = CurrentGridView.CurrentRow.Index;
-
-			CurrentSimpleSteps.RemoveAt(removeIndex);
-
-			if (CurrentGridView.RowCount == 0)
-				return;
-
-			int focusRow = Math.Min(CurrentGridView.RowCount - 1, removeIndex);
-			CurrentGridView.CurrentCell = CurrentGridView[currentCol, focusRow];
-			CurrentGridView.Focus();
+			DeleteCurrentRow();
 		}
 
 		private void FindButton_Click(object sender, EventArgs e)
 		{
+			if (CurrentGridView == null)
+				return;
+
 			var searcher = new DataGridViewSearcher(CurrentGridView);
 
 			bool notFound = searcher.Search(_findToolStripTextBox.Text) == DataGridViewSearcher.Result.NotMatched;
@@ -627,6 +633,13 @@ namespace TestStepsEditor
 			if (CurrentGridView == null)
 				return;
 
+			// deselect pass/fail column before copying
+			foreach (DataGridViewCell cell in CurrentGridView.SelectedCells)
+			{
+				if (cell.ColumnIndex > EXPECTED_RESULT_COLUMN)
+					cell.Selected = false;
+			}
+
 			DataObject clipboardData = CurrentGridView.GetClipboardContent();
 			if (clipboardData != null)
 				Clipboard.SetDataObject(clipboardData);
@@ -635,6 +648,39 @@ namespace TestStepsEditor
 		private void TestGridContext_Paste_Click(object sender, EventArgs e)
 		{
 			PasteClipboard();
+		}
+
+		private void TestGridContext_Delete_Click(object sender, EventArgs e)
+		{
+			if (CurrentGridView.SelectedRows.Count == 0)
+			{
+				DeleteCurrentRow();
+			}
+			else
+			{
+				DeleteRows(
+					CurrentGridView.SelectedRows
+					.Cast<DataGridViewRow>()
+					.Select(row => row.Index).ToList());
+			}
+		}
+
+		private void TestGridContext_InsertAbove_Click(object sender, EventArgs e)
+		{
+			var insertRow = CurrentGridView.SelectedRows.Count == 0
+				? CurrentGridView.CurrentRow
+				: CurrentGridView.SelectedRows.Cast<DataGridViewRow>().OrderBy(r => r.Index).First();
+
+			InsertStep(insertRow, InsertLocation.Above);
+		}
+
+		private void TestGrid_InsertBelow_Click(object sender, EventArgs e)
+		{
+			var insertRow = CurrentGridView.SelectedRows.Count == 0
+				? CurrentGridView.CurrentRow
+				: CurrentGridView.SelectedRows.Cast<DataGridViewRow>().OrderBy(r => r.Index).Last();
+
+			InsertStep(insertRow, InsertLocation.Below);
 		}
 
 		private void StringGeneratorButton_Click(object sender, EventArgs e)
@@ -660,39 +706,37 @@ namespace TestStepsEditor
 
 		#endregion Event handlers
 
-		private void InsertStep(bool below = false)
+		private void InsertStep(DataGridViewRow insertRow, InsertLocation location)
 		{
 			if (CurrentGridView == null)
 				return;
 
-			int insertRow = -1;
+			int insertRowIndex = insertRow == null? -1 : insertRow.Index;
 
-			if (CurrentGridView.CurrentRow != null)
+			if (location == InsertLocation.Below && insertRowIndex != -1)
+				insertRowIndex++;
+
+			int currentCol = insertRowIndex == -1? 0 : CurrentGridView.CurrentCell.ColumnIndex;
+
+			if (insertRowIndex != -1)
 			{
-				insertRow = CurrentGridView.CurrentRow.Index;
-			}
-
-			if (below && insertRow != -1)
-				insertRow++;
-
-			int currentCol = insertRow == -1? 0 : CurrentGridView.CurrentCell.ColumnIndex;
-
-			if (insertRow != -1)
-			{
-				CurrentSimpleSteps.Insert(insertRow, new SimpleStep());
+				CurrentSimpleSteps.Insert(insertRowIndex, new SimpleStep());
 			}
 			else
 			{
 				CurrentSimpleSteps.AddNew();
-				insertRow = 0;
+				insertRowIndex = 0;
 			}
 
-			CurrentGridView.CurrentCell = CurrentGridView[currentCol, insertRow];
+			CurrentGridView.CurrentCell = CurrentGridView[currentCol, insertRowIndex];
 			CurrentGridView.Focus();
 		}
 
 		private void ReplaceInCells(bool selectedOnly)
 		{
+			if (CurrentGridView == null)
+				return;
+
 			var searcher = new DataGridViewSearcher(CurrentGridView);
 			bool notReplaced = searcher.Replace(
 				_findToolStripTextBox.Text, 
@@ -808,7 +852,8 @@ namespace TestStepsEditor
 					string[] clipboardLineTokens = clipboardLine.Split('\t');
 					for (int tokenIndex = 0; tokenIndex < clipboardLineTokens.Length; ++tokenIndex)
 					{
-						if (colIndex + tokenIndex >= CurrentGridView.ColumnCount)
+						// do not paste into pass/fail column
+						if (colIndex + tokenIndex > EXPECTED_RESULT_COLUMN)
 							break;
 						
 						DataGridViewCell targetCell = CurrentGridView[colIndex + tokenIndex, rowIndex];
@@ -832,6 +877,32 @@ namespace TestStepsEditor
 			{
 				MessageBox.Show("The pasted data is in the wrong format for the target cell(s)", "Cannot Paste");
 			}
+		}
+
+		private void DeleteCurrentRow()
+		{
+			if (CurrentGridView == null || CurrentGridView.CurrentRow == null)
+				return;
+
+			DeleteRows(new List<int> { CurrentGridView.CurrentRow.Index });
+		}
+
+		private void DeleteRows(List<int> rowIndexes)
+		{
+			if (CurrentGridView == null)
+				return;
+
+			int currentCol = CurrentGridView.CurrentCell == null? 0 : CurrentGridView.CurrentCell.ColumnIndex;
+			int focusRow = Math.Min(CurrentGridView.RowCount - 2, rowIndexes.Min());
+
+			foreach (int removeIndex in rowIndexes.OrderByDescending(r => r))
+				CurrentSimpleSteps.RemoveAt(removeIndex);
+
+			if (CurrentGridView.RowCount == 0)
+				return;
+
+			CurrentGridView.CurrentCell = CurrentGridView[currentCol, focusRow];
+			CurrentGridView.Focus();
 		}
 	}
 }

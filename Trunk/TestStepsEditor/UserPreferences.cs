@@ -88,10 +88,12 @@ namespace TestStepsEditor
 					return;
 			}
 
-			key.SetValue(REG_TFSURI, TfsUri == null? String.Empty : TfsUri.ToString());
+			if (TfsUri != null && !String.IsNullOrEmpty(TfsUri.ToString()))
+				key.SetValue(REG_TFSURI, TfsUri.ToString());
 			
-			key.SetValue(REG_TESTPROJECT, TestProject ?? String.Empty);
-
+			if (!String.IsNullOrEmpty(TestProject))
+				key.SetValue(REG_TESTPROJECT, TestProject);
+			
 			if (WorkItemIdMru != null && WorkItemIdMru.Count > 0)
 				key.SetValue(REG_WORKITEMIDMRU, String.Join(",", WorkItemIdMru));
 
@@ -164,7 +166,7 @@ namespace TestStepsEditor
 			return
 				new UserPreferences()
 					{
-						TfsUri = new Uri(tfsUriReg),
+						TfsUri = String.IsNullOrEmpty(tfsUriReg)? null : new Uri(tfsUriReg),
 						TestProject = testProjectReg,
 						WorkItemIdMru = workItemIdMru,
 						WindowLocation = windowLocation,
