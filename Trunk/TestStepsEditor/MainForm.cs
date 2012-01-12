@@ -368,6 +368,7 @@ namespace TestStepsEditor
 					{
 						((ITestStep)testCase.Actions[stepNumber]).Title = new ParameterizedString(step.Title);
 						((ITestStep)testCase.Actions[stepNumber]).ExpectedResult = new ParameterizedString(step.ExpectedResult);
+						((ITestStep)testCase.Actions[stepNumber]).TestStepType = String.IsNullOrWhiteSpace(step.ExpectedResult)? TestStepType.ActionStep : TestStepType.ValidateStep);
 					}
 					// current action is not ITestStep: if user-entered data is a step
 					else if (step.IsTestStep())
@@ -376,6 +377,7 @@ namespace TestStepsEditor
 						var newAction = testCase.CreateTestStep();
 						newAction.Title = new ParameterizedString(step.Title);
 						newAction.ExpectedResult = new ParameterizedString(step.ExpectedResult);
+						newAction.TestStepType = String.IsNullOrWhiteSpace(step.ExpectedResult)? TestStepType.ActionStep : TestStepType.ValidateStep;
 
 						testCase.Actions.Insert(stepNumber, newAction);
 					}
