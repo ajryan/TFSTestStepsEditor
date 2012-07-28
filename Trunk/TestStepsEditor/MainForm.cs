@@ -9,33 +9,26 @@ using System.Windows.Forms;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Framework.Common;
 using Microsoft.TeamFoundation.TestManagement.Client;
+using Microsoft.TeamFoundation.WorkItemTracking.Client;
+using TestStepsEditor.Gui;
+using TestStepsEditor.Tfs;
 
 namespace TestStepsEditor
 {
 	public partial class MainForm : Form
 	{
-		private enum InsertLocation
-		{
-			Above,
-			Below
-		}
-
-		private const int TITLE_COLUMN = 0;
-		private const int EXPECTED_RESULT_COLUMN = 1;
-		private const int DONE_COLUMN = 2;
-
 		private TfsTeamProjectCollection _tfs;
 		private ITestManagementTeamProject _testProject;
-		private UserPreferences _userPreferences;
+		private readonly UserPreferences _userPreferences = new UserPreferences();
 		private readonly Dictionary<int, TestEditInfo> _tabTestInfoMap = new Dictionary<int, TestEditInfo>();
 
 		public MainForm()
 		{
 			InitializeComponent();
-			
 			_toolStripContainer.Enabled = false;
 
-			_userPreferences = UserPreferences.Load();
+			_userPreferences.Load();
+
 			ApplyUserDisplayPreferences();
 
 			Shown += (
@@ -43,12 +36,9 @@ namespace TestStepsEditor
 				{
 					try
 					{
-						UseWaitCursor = true;
 						_testStateToolStripLabel.Text = "Connecting...";
-						Application.DoEvents();
-						
 						ApplyUserServerPreferences();
-						_testStateToolStripLabel.Text = _testProject != null? "Connected." : String.Empty;
+						_testStateToolStripLabel.Text = "Connected.";
 
 						_workItemIdToolStripComboBox.Focus();
 						_toolStripContainer.Enabled = true;
@@ -58,25 +48,14 @@ namespace TestStepsEditor
 						_toolStripContainer.Enabled = true;
 
 						MessageBox.Show("Could not load previous TFS connection.\n\nError:\n" + ex.Message, "Error Restoring Previous Connection");
-						
 						_changeProjectToolStripButton.Text = "(not connected)";
-						_testStateToolStripLabel.Text = String.Empty;
-
-						_userPreferences.TfsUri = null;
-						_userPreferences.TestProject = null;
-
-					}
-					finally
-					{
-						UseWaitCursor = false;
 					}
 				});
 		}
 
 		private void ApplyUserServerPreferences()
 		{
-			if (_userPreferences == null ||
-				_userPreferences.TfsUri == null ||
+			if (_userPreferences.TfsUri.Value == null ||
 				String.IsNullOrEmpty(_userPreferences.TestProject))
 			{
 				return;
@@ -91,14 +70,12 @@ namespace TestStepsEditor
 
 		private void ApplyUserDisplayPreferences()
 		{
-			if (_userPreferences == null)
-				return;
-
-			_workItemIdToolStripComboBox.ComboBox.DataSource = _userPreferences.WorkItemIdMru;
+			if (_workItemIdToolStripComboBox.ComboBox != null)
+				_workItemIdToolStripComboBox.ComboBox.DataSource = _userPreferences.WorkItemIdMru.Value;
 
 			// if the saved location + size is not fully on-screen, do not override defaults
 			bool useSavedLocation = false;
-			if (_userPreferences.WindowSize.HasValue && _userPreferences.WindowLocation.HasValue)
+			if (!_userPreferences.WindowSize.Value.IsEmpty && !_userPreferences.WindowLocation.Value.IsEmpty)
 			{
 				Rectangle savedPosition = new Rectangle(
 					_userPreferences.WindowLocation.Value.X,
@@ -120,7 +97,7 @@ namespace TestStepsEditor
 				Location = _userPreferences.WindowLocation.Value;
 			}
 
-			if (_userPreferences.WorkItemToolbarTop.HasValue && _userPreferences.WorkItemToolbarTop.Value)
+			if (_userPreferences.WorkItemToolbarTop)
 			{
 				if (_toolStripContainer.BottomToolStripPanel.Contains(_witToolStrip))
 				{
@@ -129,7 +106,7 @@ namespace TestStepsEditor
 				}
 			}
 
-			if (_userPreferences.FindToolbarTop.HasValue && _userPreferences.FindToolbarTop.Value)
+			if (_userPreferences.FindToolbarTop)
 			{
 				if (_toolStripContainer.BottomToolStripPanel.Contains(_findToolStrip))
 				{
@@ -145,28 +122,6 @@ namespace TestStepsEditor
 					if (witTop)
 						_toolStripContainer.TopToolStripPanel.Controls.Add(_witToolStrip);
 				}
-			}
-		}
-
-		private DataGridView CurrentGridView
-		{
-			get
-			{
-				if (_testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
-					return null;
-
-				return _tabTestInfoMap[_testTabControl.SelectedIndex].DataGridView;
-			}
-		}
-
-		private SimpleSteps CurrentSimpleSteps
-		{
-			get
-			{
-				if (_testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
-					return null;
-
-				return _tabTestInfoMap[_testTabControl.SelectedIndex].SimpleSteps;
 			}
 		}
 
@@ -203,7 +158,7 @@ namespace TestStepsEditor
 							: Assembly.GetExecutingAssembly().GetName().Version.ToString();
 						
 						MessageBox.Show(
-							"Lonza TFS Test Steps Editor\r\nVersion: " + version,
+							"TFS Test Steps Editor\r\nVersion: " + version,
 							"About TFS Test Steps Editor");
 
 						break;
@@ -257,11 +212,8 @@ namespace TestStepsEditor
 
 		private void MainForm_Closing(object sender, FormClosingEventArgs e)
 		{
-			foreach (var testInfo in _tabTestInfoMap.Values)
+			if (_tabTestInfoMap.Values.Any(testInfo => testInfo.SimpleSteps.Dirty))
 			{
-				if (!testInfo.SimpleSteps.Dirty)
-					continue;
-
 				var confirmExit = MessageBox.Show(
 					"One or more open tests has not been saved. Are you sure you want to exit?",
 					"Confirm Exit",
@@ -270,24 +222,22 @@ namespace TestStepsEditor
 					MessageBoxDefaultButton.Button2);
 
 				if (confirmExit == DialogResult.No)
-					e.Cancel = true;
-
-				break;
-			}
-
-			if (!e.Cancel)
-			{
-				_userPreferences.FindToolbarTop = _toolStripContainer.TopToolStripPanel.Contains(_findToolStrip);
-				_userPreferences.WorkItemToolbarTop = _toolStripContainer.TopToolStripPanel.Contains(_witToolStrip);
-
-				if (WindowState != FormWindowState.Minimized)
 				{
-					_userPreferences.WindowLocation = Location;
-					_userPreferences.WindowSize = WindowState == FormWindowState.Maximized ? new Size(-1, -1) : Size;
+					e.Cancel = true;
+					return;
 				}
-
-				_userPreferences.SaveToRegistry();
 			}
+
+			_userPreferences.FindToolbarTop.Value = _toolStripContainer.TopToolStripPanel.Contains(_findToolStrip);
+			_userPreferences.WorkItemToolbarTop.Value = _toolStripContainer.TopToolStripPanel.Contains(_witToolStrip);
+
+			if (WindowState != FormWindowState.Minimized)
+			{
+				_userPreferences.WindowLocation.Value = Location;
+				_userPreferences.WindowSize.Value = WindowState == FormWindowState.Maximized ? new Size(-1, -1) : Size;
+			}
+
+			_userPreferences.Save();
 		}
 
 		private void CloseCurentButton_Click(object sender, EventArgs e)
@@ -323,7 +273,7 @@ namespace TestStepsEditor
 
 		private void SaveButton_Click(object sender, EventArgs e)
 		{
-			if (_testTabControl.TabCount < 1 || CurrentGridView == null)
+			if (_testTabControl.TabCount < 1)
 				return;
 
 			_testStateToolStripLabel.Text = "Saving...";
@@ -338,59 +288,10 @@ namespace TestStepsEditor
 
 		private void SaveTestBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
 		{
-			var saveTestInfo = e.Argument as TestEditInfo;
-			var testCase = saveTestInfo.TestCase;
-			var simpleSteps = saveTestInfo.SimpleSteps;
-
-			if (testCase == null || simpleSteps == null || simpleSteps.Count == 0)
-				return;
-
+			var saveTestInfo = (TestEditInfo) e.Argument;
 			try
 			{
-				int stepNumber = 0;
-				foreach (SimpleStep step in simpleSteps)
-				{
-					// do not save empty final step
-					if (stepNumber == simpleSteps.Count - 1 &&
-						String.IsNullOrEmpty(step.Title) &&
-						String.IsNullOrEmpty(step.ExpectedResult))
-					{
-						break;
-					}
-
-					if (testCase.Actions.Count <= stepNumber)
-					{
-						testCase.Actions.Add(testCase.CreateTestStep());
-					}
-
-					// directly apply to existing ITestSteps
-					if (testCase.Actions[stepNumber] is ITestStep)
-					{
-						((ITestStep)testCase.Actions[stepNumber]).Title = new ParameterizedString(step.Title);
-						((ITestStep)testCase.Actions[stepNumber]).ExpectedResult = new ParameterizedString(step.ExpectedResult);
-						((ITestStep)testCase.Actions[stepNumber]).TestStepType = String.IsNullOrWhiteSpace(step.ExpectedResult)? TestStepType.ActionStep : TestStepType.ValidateStep);
-					}
-					// current action is not ITestStep: if user-entered data is a step
-					else if (step.IsTestStep())
-					{
-						// insert a new action at this point
-						var newAction = testCase.CreateTestStep();
-						newAction.Title = new ParameterizedString(step.Title);
-						newAction.ExpectedResult = new ParameterizedString(step.ExpectedResult);
-						newAction.TestStepType = String.IsNullOrWhiteSpace(step.ExpectedResult)? TestStepType.ActionStep : TestStepType.ValidateStep;
-
-						testCase.Actions.Insert(stepNumber, newAction);
-					}
-
-					stepNumber++;
-				}
-
-				while (stepNumber < testCase.Actions.Count)
-					testCase.Actions.RemoveAt(stepNumber);
-
-				testCase.Save();
-				simpleSteps.ResetDirtyState();
-
+				saveTestInfo.Save();
 				e.Result = String.Empty;
 			}
 			catch (Exception ex)
@@ -427,9 +328,6 @@ namespace TestStepsEditor
 
 		private void LoadButton_Click(object sender, EventArgs e)
 		{
-			if (_testProject == null)
-				return;
-
 			int workItemId;
 			if (!Int32.TryParse(_workItemIdToolStripComboBox.Text, out workItemId))
 				return;
@@ -453,7 +351,7 @@ namespace TestStepsEditor
 		
 		private void LoadTestBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
 		{
-			var testInfo = e.Argument as TestEditInfo;
+			var testInfo = (TestEditInfo) e.Argument;
 
 			try
 			{
@@ -462,11 +360,22 @@ namespace TestStepsEditor
 					(ITestBase) _testProject.SharedSteps.Find(testInfo.WorkItemId);
 
 				if (testInfo.TestCase == null)
+				{
 					testInfo.Message = "Input test case ID not found.";
+				}
+				else if (testInfo.TestCase.WorkItem.Project.Name != _testProject.WitProject.Name)
+				{
+					testInfo.Message = String.Format(
+						"Test case is from project {0}. Current project is {1}.", 
+						testInfo.TestCase.WorkItem.Project.Name,
+						_testProject.WitProject.Name);
+
+					testInfo.TestCase = null;
+				}
 			}
 			catch (Exception ex)
 			{
-				testInfo.Message = "Could not load test case: " + ex.Message;
+				testInfo.Message = "Could not load test case:\r\n" + ex;
 			}
 
 			e.Result = testInfo;
@@ -474,55 +383,35 @@ namespace TestStepsEditor
 
 		private void LoadTestBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
-			var testInfo = e.Result as TestEditInfo;
+			var testInfo = (TestEditInfo) e.Result;
 			if (!String.IsNullOrWhiteSpace(testInfo.Message))
 			{
+				UseWaitCursor = false;
 				_toolStripContainer.Enabled = true;
 				_testStateToolStripLabel.Text = "Error.";
 
 				MessageBox.Show(testInfo.Message, "Error Loading Test Case");
-				UseWaitCursor = false;
 				return;
 			}
 
 			SimpleSteps newSteps = TryCreateSimpleSteps(testInfo);
 			if (newSteps == null)
-			{
-				UseWaitCursor = false;
 				return;
-			}
 
 			testInfo.SimpleSteps = newSteps;
 			
-			var newDataGridView = CreateTestTabAndDataGridView(testInfo.TestCase.Id + " " + testInfo.TestCase.Title);
-			if (newDataGridView == null)
-			{
-				UseWaitCursor = false;
-				return;
-			}
-
+			var newEditControl = CreateTestTabAndEditControl(testInfo);
+			
 			try
 			{
-				testInfo.DataGridView = newDataGridView;
+				testInfo.TestEditControl = newEditControl;
 
-				newDataGridView.SuspendLayout();
-
-				newDataGridView.DataSource = testInfo.SimpleSteps;
-
-				newDataGridView.Columns[TITLE_COLUMN].SortMode = DataGridViewColumnSortMode.NotSortable;
-				newDataGridView.Columns[EXPECTED_RESULT_COLUMN].SortMode = DataGridViewColumnSortMode.NotSortable;
-				newDataGridView.Columns[DONE_COLUMN].SortMode = DataGridViewColumnSortMode.NotSortable;
-
-				newDataGridView.Columns[TITLE_COLUMN].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-				newDataGridView.Columns[EXPECTED_RESULT_COLUMN].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-				newDataGridView.Columns[DONE_COLUMN].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-				newDataGridView.Columns[DONE_COLUMN].Width = 40;
-
-				newDataGridView.ResumeLayout(true);
+				newEditControl.TestDataGridView.LoadSteps(_enableResultsModeMenuItem.Checked);
+				newEditControl.LoadCurrentResults();
 
 				_toolStripContainer.Enabled = true;
 				UseWaitCursor = false;
-				newDataGridView.Focus();
+				newEditControl.Focus();
 
 				int newTabIndex = _testTabControl.TabCount - 1;
 				_tabTestInfoMap[newTabIndex] = testInfo;
@@ -530,34 +419,27 @@ namespace TestStepsEditor
 				_testStateToolStripLabel.Text = "Loaded.";
 
 				_userPreferences.AddWorkItemIdMru(testInfo.TestCase.Id);
-				_userPreferences.SaveToRegistry();
-				
+				_userPreferences.Save();
+
+				EnableResultsModeToolStripMenuItem_CheckedChanged(null, null);
 				_workItemIdToolStripComboBox.Text = String.Empty;
 			}
 			catch (Exception ex)
 			{
+				_toolStripContainer.Enabled = true;
+				UseWaitCursor = false;
+
 				MessageBox.Show(
-					"Could not display test case: " + ex.Message,
-					"Error Displaying Test Case");
+					"Error loading test case: " + ex.Message,
+					"Error Loading Test Case");
 
 				_testTabControl.TabPages.RemoveAt(_testTabControl.TabCount - 1);
-			}
-			finally
-			{
-				UseWaitCursor = false;
 			}
 		}
 
 		private void ChangeProjectButton_Click(object sender, EventArgs e)
 		{
-			var newServerSettings = UserPreferences.LoadProjectSelectionFromUser();
-			if (newServerSettings == null)
-				return;
-
-			_userPreferences = newServerSettings;
-
-			_workItemIdToolStripComboBox.ComboBox.DataSource = _userPreferences.WorkItemIdMru;
-
+			_userPreferences.LoadProjectSelectionFromUser();
 			if (!String.IsNullOrEmpty(_userPreferences.TestProject))
 				ApplyUserServerPreferences();
 
@@ -591,7 +473,7 @@ namespace TestStepsEditor
 			if (CurrentGridView == null)
 				return;
 
-			InsertStep(CurrentGridView.CurrentRow, InsertLocation.Above);
+			CurrentGridView.InsertStep(CurrentGridView.CurrentRow, InsertLocation.Above);
 		}
 
 		private void InsertBelowButton_Click(object sender, EventArgs e)
@@ -599,19 +481,19 @@ namespace TestStepsEditor
 			if (CurrentGridView == null)
 				return;
 
-			InsertStep(CurrentGridView.CurrentRow, InsertLocation.Below);
+			CurrentGridView.InsertStep(CurrentGridView.CurrentRow, InsertLocation.Below);
 		}
 
 		private void DeleteButton_Click(object sender, EventArgs e)
 		{
-			DeleteCurrentRow();
+			if (CurrentGridView == null)
+				return;
+
+			CurrentGridView.DeleteCurrentRow();
 		}
 
 		private void FindButton_Click(object sender, EventArgs e)
 		{
-			if (CurrentGridView == null)
-				return;
-
 			var searcher = new DataGridViewSearcher(CurrentGridView);
 
 			bool notFound = searcher.Search(_findToolStripTextBox.Text) == DataGridViewSearcher.Result.NotMatched;
@@ -635,16 +517,7 @@ namespace TestStepsEditor
 			if (CurrentGridView == null)
 				return;
 
-			// deselect pass/fail column before copying
-			foreach (DataGridViewCell cell in CurrentGridView.SelectedCells)
-			{
-				if (cell.ColumnIndex > EXPECTED_RESULT_COLUMN)
-					cell.Selected = false;
-			}
-
-			DataObject clipboardData = CurrentGridView.GetClipboardContent();
-			if (clipboardData != null)
-				Clipboard.SetDataObject(clipboardData);
+			CurrentGridView.CopyToClipboard();
 		}
 
 		private void TestGridContext_Paste_Click(object sender, EventArgs e)
@@ -654,13 +527,16 @@ namespace TestStepsEditor
 
 		private void TestGridContext_Delete_Click(object sender, EventArgs e)
 		{
+			if (CurrentGridView == null)
+				return;
+
 			if (CurrentGridView.SelectedRows.Count == 0)
 			{
-				DeleteCurrentRow();
+				CurrentGridView.DeleteCurrentRow();
 			}
 			else
 			{
-				DeleteRows(
+				CurrentGridView.DeleteRows(
 					CurrentGridView.SelectedRows
 					.Cast<DataGridViewRow>()
 					.Select(row => row.Index).ToList());
@@ -673,7 +549,7 @@ namespace TestStepsEditor
 				? CurrentGridView.CurrentRow
 				: CurrentGridView.SelectedRows.Cast<DataGridViewRow>().OrderBy(r => r.Index).First();
 
-			InsertStep(insertRow, InsertLocation.Above);
+			CurrentGridView.InsertStep(insertRow, InsertLocation.Above);
 		}
 
 		private void TestGrid_InsertBelow_Click(object sender, EventArgs e)
@@ -682,7 +558,7 @@ namespace TestStepsEditor
 				? CurrentGridView.CurrentRow
 				: CurrentGridView.SelectedRows.Cast<DataGridViewRow>().OrderBy(r => r.Index).Last();
 
-			InsertStep(insertRow, InsertLocation.Below);
+			CurrentGridView.InsertStep(insertRow, InsertLocation.Below);
 		}
 
 		private void StringGeneratorButton_Click(object sender, EventArgs e)
@@ -706,39 +582,127 @@ namespace TestStepsEditor
 			}
 		}
 
-		#endregion Event handlers
-
-		private void InsertStep(DataGridViewRow insertRow, InsertLocation location)
+		private void PublishButton_Click(object sender, EventArgs e)
 		{
-			if (CurrentGridView == null)
+			if (CurrentTestEditInfo == null)
 				return;
 
-			int insertRowIndex = insertRow == null? -1 : insertRow.Index;
-
-			if (location == InsertLocation.Below && insertRowIndex != -1)
-				insertRowIndex++;
-
-			int currentCol = insertRowIndex == -1? 0 : CurrentGridView.CurrentCell.ColumnIndex;
-
-			if (insertRowIndex != -1)
+			if (CurrentSimpleSteps.Dirty)
 			{
-				CurrentSimpleSteps.Insert(insertRowIndex, new SimpleStep());
+				MessageBox.Show("Please save the current test case before publishing.", "Cannot Publish");
+				return;
+			}
+
+			var suiteDialog = new TestSuiteDialog(_testProject, CurrentTestEditInfo);
+			var suiteSelectResult = suiteDialog.ShowDialog(this);
+			if (suiteSelectResult == DialogResult.Cancel || suiteDialog.SelectedTestPoint == null)
+				return;
+
+			var testRun = new TestRun(
+				CurrentTestEditInfo,
+				suiteDialog.SelectedTestPoint.TestPoint,
+				_tfs.AuthorizedIdentity);
+
+			_testStateToolStripLabel.Text = "Publishing...";
+			_toolStripContainer.Enabled = false;
+			UseWaitCursor = true;
+			
+			_publishTestBackgroundWorker.RunWorkerAsync(testRun);
+		}
+
+		private void PublishTestBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+		{
+			var testRun = (TestRun) e.Argument;
+			try
+			{
+				testRun.Publish();
+				e.Result = null;
+			}
+			catch (Exception ex)
+			{
+				e.Result = "Could not publish test case: " + ex.Message;
+			}
+		}
+
+		private void PublishTestBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+		{
+			_testStateToolStripLabel.Text = "Publish complete.";
+			_toolStripContainer.Enabled = true;
+			UseWaitCursor = false;
+
+			var errorMessage = e.Result as string;
+			if (errorMessage == null)
+				return;
+
+			MessageBox.Show(
+				"Error publishing test case: " + errorMessage,
+				"Error Publishing");
+		}
+
+		private void SaveCurrentResultsButton_Click(object sender, EventArgs e)
+		{
+			if (CurrentTestEditControl == null)
+				return;
+
+			try
+			{
+				CurrentTestEditControl.SaveCurrentResultsToZip();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(
+					"Error saving current results to disk: " + ex.Message,
+					"Error Saving Results");
+			}
+		}
+
+		private void LoadResultsButton_Click(object sender, EventArgs e)
+		{
+			if (CurrentTestEditControl == null)
+				return;
+
+			CurrentTestEditControl.LoadResultsFromZip();
+		}
+
+		private void ClearResultsToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			if (CurrentTestEditControl == null)
+				return;
+
+			CurrentTestEditControl.ResetResults();
+		}
+
+		private void EnableResultsModeToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
+		{
+			if (CurrentTestEditControl == null)
+				return;
+
+			if (_enableResultsModeMenuItem.Checked)
+			{
+				CurrentTestEditControl.ShowResultsPanel();
+				CurrentGridView.ShowOutcomeColumn();
+
+				_publishToolStripMenuItem.Enabled = true;
+				_saveCurrentResultsToolStripMenuItem.Enabled = true;
+				_loadResultsToolStripMenuItem.Enabled = true;
+				_clearResultsToolStripMenuItem.Enabled = true;
 			}
 			else
 			{
-				CurrentSimpleSteps.AddNew();
-				insertRowIndex = 0;
-			}
+				CurrentTestEditControl.HideResultsPanel();
+				CurrentGridView.HideOutcomeColumn();
 
-			CurrentGridView.CurrentCell = CurrentGridView[currentCol, insertRowIndex];
-			CurrentGridView.Focus();
+				_publishToolStripMenuItem.Enabled = false;
+				_saveCurrentResultsToolStripMenuItem.Enabled = false;
+				_loadResultsToolStripMenuItem.Enabled = false;
+				_clearResultsToolStripMenuItem.Enabled = false;
+			}
 		}
+
+		#endregion Event handlers
 
 		private void ReplaceInCells(bool selectedOnly)
 		{
-			if (CurrentGridView == null)
-				return;
-
 			var searcher = new DataGridViewSearcher(CurrentGridView);
 			bool notReplaced = searcher.Replace(
 				_findToolStripTextBox.Text, 
@@ -753,26 +717,7 @@ namespace TestStepsEditor
 		{
 			try
 			{
-				var newSteps = new SimpleSteps(testInfo.TestCase.Actions.Count);
-
-				foreach (ITestAction action in testInfo.TestCase.Actions)
-				{
-					if (action is ITestStep)
-					{
-						var testStep = action as ITestStep;
-						newSteps.Add(new SimpleStep(testStep.Title.ToString(), testStep.ExpectedResult.ToString()));
-					}
-					else if (action is ISharedStepReference)
-					{
-						var sharedStep = action as ISharedStepReference;
-						newSteps.Add(new SimpleStep("Shared step ID " + sharedStep.SharedStepId, String.Empty, false));
-					}
-					else
-					{
-						newSteps.Add(new SimpleStep("Unknown action " + action.Id, String.Empty, false));
-					}
-				}
-				return newSteps;
+				return SimpleSteps.Create(testInfo);
 			}
 			catch (Exception ex)
 			{
@@ -784,30 +729,19 @@ namespace TestStepsEditor
 			}
 		}
 
-		private DataGridView CreateTestTabAndDataGridView(string tabTitle)
+		private TestEditUserControl CreateTestTabAndEditControl(TestEditInfo testEditInfo)
 		{
-			string newTabKey = _testTabControl.TabCount.ToString();
+			var newEditControl = TestEditUserControl.Create(testEditInfo, _testGridContextMenu, _enableResultsModeMenuItem.Checked);
+			newEditControl.Dock = DockStyle.Fill;
 
-			var newDataGridView = new NumberedDataGridView
-			{
-				Dock = DockStyle.Fill,
-				AllowUserToAddRows = false,
-				AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCellsExceptHeaders,
-				ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText,
-				ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
-				ContextMenuStrip = _testGridContextMenu,
-				DefaultCellStyle = new DataGridViewCellStyle
-				{
-					Alignment = DataGridViewContentAlignment.TopLeft,
-					WrapMode = DataGridViewTriState.True
-				}
-			};
+			string newTabKey = _testTabControl.TabCount.ToString();
+			string tabTitle = testEditInfo.TestCase.Id + " " + testEditInfo.TestCase.Title;
 
 			_testTabControl.TabPages.Add(newTabKey, tabTitle);
-			_testTabControl.TabPages[newTabKey].Controls.Add(newDataGridView);
+			_testTabControl.TabPages[newTabKey].Controls.Add(newEditControl);
 			_testTabControl.SelectedIndex = (_testTabControl.TabCount - 1);
 
-			return newDataGridView;
+			return newEditControl;
 		}
 
 		private void PasteClipboard()
@@ -817,94 +751,56 @@ namespace TestStepsEditor
 
 			try
 			{
-				string clipboardText = Clipboard.GetText();
-				if (String.IsNullOrWhiteSpace(clipboardText))
-					return;
-
-				int selectedCount = CurrentGridView.GetCellCount(DataGridViewElementStates.Selected);
-
-				if (selectedCount == 0 && CurrentGridView.CurrentCell == null)
-					return;
-
-				int rowIndex = CurrentGridView.CurrentCell.RowIndex;
-				int colIndex = CurrentGridView.CurrentCell.ColumnIndex;
-
-				if (selectedCount > 1)
-				{
-					List<DataGridViewCell> selectedCells = new List<DataGridViewCell>(selectedCount);
-					selectedCells.AddRange(CurrentGridView.SelectedCells.Cast<DataGridViewCell>());
-
-					rowIndex = selectedCells.Min(c => c.RowIndex);
-					colIndex = selectedCells.Min(c => c.ColumnIndex);
-				}
-
-				string[] clipboardLines = clipboardText.Split(new []{'\n'}, StringSplitOptions.RemoveEmptyEntries);
-				foreach (string clipboardLine in clipboardLines)
-				{
-					bool addedRow = false;
-					if (rowIndex == CurrentGridView.RowCount)
-					{
-						CurrentSimpleSteps.AddNew();
-						addedRow = true;
-					}
-
-					if (rowIndex >= CurrentGridView.RowCount || clipboardLine.Length <= 0)
-						break;
-					
-					string[] clipboardLineTokens = clipboardLine.Split('\t');
-					for (int tokenIndex = 0; tokenIndex < clipboardLineTokens.Length; ++tokenIndex)
-					{
-						// do not paste into pass/fail column
-						if (colIndex + tokenIndex > EXPECTED_RESULT_COLUMN)
-							break;
-						
-						DataGridViewCell targetCell = CurrentGridView[colIndex + tokenIndex, rowIndex];
-
-						// done pasting when we reach an unselected cell, except when we added the row
-						if (!targetCell.Selected && !addedRow)
-							return;
-
-						if (targetCell.Value == null || 
-							(targetCell.Value.ToString() != clipboardLineTokens[tokenIndex]))
-						{
-							targetCell.Value = Convert.ChangeType(
-								clipboardLineTokens[tokenIndex], targetCell.ValueType);
-						}
-					}
-
-					rowIndex++;
-				}
+				CurrentGridView.PasteClipboard();
 			}
-			catch (FormatException)
+			catch (Exception)
 			{
 				MessageBox.Show("The pasted data is in the wrong format for the target cell(s)", "Cannot Paste");
 			}
 		}
 
-		private void DeleteCurrentRow()
+		private TestEditUserControl CurrentTestEditControl
 		{
-			if (CurrentGridView == null || CurrentGridView.CurrentRow == null)
-				return;
+			get
+			{
+				if (_testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
+					return null;
 
-			DeleteRows(new List<int> { CurrentGridView.CurrentRow.Index });
+				return _tabTestInfoMap[_testTabControl.SelectedIndex].TestEditControl;
+			}
 		}
 
-		private void DeleteRows(List<int> rowIndexes)
+		private TestStepsDataGridView CurrentGridView
 		{
-			if (CurrentGridView == null)
-				return;
+			get
+			{
+				if (_testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
+					return null;
 
-			int currentCol = CurrentGridView.CurrentCell == null? 0 : CurrentGridView.CurrentCell.ColumnIndex;
-			int focusRow = Math.Min(CurrentGridView.RowCount - 2, rowIndexes.Min());
+				return _tabTestInfoMap[_testTabControl.SelectedIndex].TestEditControl.TestDataGridView;
+			}
+		}
 
-			foreach (int removeIndex in rowIndexes.OrderByDescending(r => r))
-				CurrentSimpleSteps.RemoveAt(removeIndex);
+		private SimpleSteps CurrentSimpleSteps
+		{
+			get
+			{
+				if (_testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
+					return null;
 
-			if (CurrentGridView.RowCount == 0)
-				return;
+				return _tabTestInfoMap[_testTabControl.SelectedIndex].SimpleSteps;
+			}
+		}
 
-			CurrentGridView.CurrentCell = CurrentGridView[currentCol, focusRow];
-			CurrentGridView.Focus();
+		private TestEditInfo CurrentTestEditInfo
+		{
+			get
+			{
+				if (_testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
+					return null;
+
+				return _tabTestInfoMap[_testTabControl.SelectedIndex];
+			}
 		}
 	}
 }

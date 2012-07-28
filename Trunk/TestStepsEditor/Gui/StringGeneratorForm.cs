@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
-namespace TestStepsEditor
+namespace TestStepsEditor.Gui
 {
 	public partial class StringGeneratorForm : Form
 	{
@@ -9,12 +11,15 @@ namespace TestStepsEditor
 		private const string UPPERCASE_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		private const string DIGITS = "0123456789";
 
+		private static Size _LastSize = new Size(583, 295);
 		private static bool _LastUpper = true;
 		private static bool _LastLower = true;
 		private static bool _LastDigits = true;
 		private static bool _LastSpecific = false;
 		private static string _LastSpecificChars = String.Empty;
 		private static int _LastLength = 10;
+		private static bool _LastRandomRadio = true;
+		
 
 		public StringGeneratorForm()
 		{
@@ -22,6 +27,7 @@ namespace TestStepsEditor
 
 			_lengthUpDown.Maximum = Int32.MaxValue;
 
+			Size = _LastSize;
 			_upperCaseCheckBox.Checked = _LastUpper;
 			_lowerCaseCheckBox.Checked = _LastLower;
 			_digitsCheckBox.Checked = _LastDigits;
@@ -29,8 +35,21 @@ namespace TestStepsEditor
 			_specificCharsTextBox.Text = _LastSpecificChars;
 			_lengthUpDown.Value = _LastLength;
 			
+			_randomRadioButton.Checked = _LastRandomRadio;
+			_preDefinedRadioButton.Checked = !_LastRandomRadio;
+
+			string localUserAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+			string predefinedStringsPath = Path.Combine(localUserAppDataPath, "TestStepsEditorStrings.txt");
+			if (File.Exists(predefinedStringsPath))
+			{
+				string[] predefinedStrings = File.ReadAllLines(predefinedStringsPath);
+				_predefinedListBox.DataSource = predefinedStrings;
+			}
+
 			TopLevel = true;
 			KeyPreview = true;
+
+			Load += (o, e) => RandomPreDefinedRadioButton_CheckedChanged(null, null);
 		}
 
 		protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -44,7 +63,28 @@ namespace TestStepsEditor
 			return base.ProcessCmdKey(ref msg, keyData);
 		}
 
-		private void GenerateButton_Click(object sender, System.EventArgs e)
+		private void GenerateButton_Click(object sender, EventArgs e)
+		{
+			string text = _randomRadioButton.Checked
+				? GenerateRandom()
+				: GeneratePreDefined();
+
+			if (!String.IsNullOrEmpty(text))
+				Clipboard.SetText(text);
+
+			_LastSize = Size;
+			_LastUpper = _upperCaseCheckBox.Checked;
+			_LastLower = _lowerCaseCheckBox.Checked;
+			_LastDigits = _digitsCheckBox.Checked;
+			_LastSpecific = _specificCharactersCheckBox.Checked;
+			_LastSpecificChars = _specificCharsTextBox.Text;
+			_LastLength = (int) _lengthUpDown.Value;
+			_LastRandomRadio = _randomRadioButton.Checked;
+
+			DialogResult = DialogResult.OK;
+		}
+
+		private string GenerateRandom()
 		{
 			bool lower = _lowerCaseCheckBox.Checked;
 			bool upper = _upperCaseCheckBox.Checked;
@@ -54,7 +94,7 @@ namespace TestStepsEditor
 			if ((!lower && !upper && !digit && !specific) || _lengthUpDown.Value < 1)
 			{
 				MessageBox.Show("No characters selected to generate.", "Nothing to Generate");
-				return;
+				return null;
 			}
 
 			string allowedChars = String.Empty;
@@ -73,22 +113,44 @@ namespace TestStepsEditor
 				resultChars[resultIndex] = allowedChars[rnd.Next(0, allowedCharsLen)];
 			}
 
-			string result = new string(resultChars);
-			Clipboard.SetText(result);
+			return new string(resultChars);
+		}
 
-			_LastUpper = _upperCaseCheckBox.Checked;
-			_LastLower = _lowerCaseCheckBox.Checked;
-			_LastDigits = _digitsCheckBox.Checked;
-			_LastSpecific = _specificCharactersCheckBox.Checked;
-			_LastSpecificChars = _specificCharsTextBox.Text;
-			_LastLength = length;
-
-			DialogResult = DialogResult.OK;
+		private string GeneratePreDefined()
+		{
+			return (string) _predefinedListBox.SelectedValue;
 		}
 
 		private void SpecificCharsCheckBox_CheckedChanged(object sender, EventArgs e)
 		{
 			_specificCharsTextBox.Enabled = _specificCharactersCheckBox.Checked;
+		}
+
+		private void RandomPreDefinedRadioButton_CheckedChanged(object sender, EventArgs e)
+		{
+			bool randomChecked = _randomRadioButton.Checked;
+			_randomGroupBox.Enabled = randomChecked;
+			_predefinedGroupBox.Enabled = !randomChecked;
+
+			if (randomChecked)
+			{
+				_lengthUpDown.Focus();
+				_generateButton.Text = "&Generate to Clipboard";
+			}
+			else
+			{
+				_predefinedListBox.Focus();
+				_generateButton.Text = "&Copy to Clipboard";
+			}
+		}
+
+		private void PredefinedListBox_MouseDoubleClick(object sender, MouseEventArgs e)
+		{
+			int itemIndex = _predefinedListBox.IndexFromPoint(e.Location);
+			if (itemIndex == ListBox.NoMatches)
+				return;
+
+			GenerateButton_Click(null, null);
 		}
 	}
 }

@@ -55,6 +55,12 @@
 			this._loadToolStripButton = new System.Windows.Forms.ToolStripButton();
 			this._saveToolStripButton = new System.Windows.Forms.ToolStripButton();
 			this._closeToolStripButton = new System.Windows.Forms.ToolStripButton();
+			this._resultsToolStripButton = new System.Windows.Forms.ToolStripDropDownButton();
+			this._enableResultsModeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._publishToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._loadResultsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._saveCurrentResultsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this._clearResultsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
 			this._insertStepToolStripSplitButton = new System.Windows.Forms.ToolStripSplitButton();
 			this.insertStepToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -70,6 +76,7 @@
 			this._testTabControl = new System.Windows.Forms.TabControl();
 			this._loadTestBackgroundWorker = new System.ComponentModel.BackgroundWorker();
 			this._saveTestBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+			this._publishTestBackgroundWorker = new System.ComponentModel.BackgroundWorker();
 			this._testGridContextMenu.SuspendLayout();
 			this._findToolStrip.SuspendLayout();
 			this._witToolStrip.SuspendLayout();
@@ -158,7 +165,7 @@
 			this._findToolStrip.Location = new System.Drawing.Point(0, 0);
 			this._findToolStrip.Name = "_findToolStrip";
 			this._findToolStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-			this._findToolStrip.Size = new System.Drawing.Size(802, 25);
+			this._findToolStrip.Size = new System.Drawing.Size(837, 25);
 			this._findToolStrip.Stretch = true;
 			this._findToolStrip.TabIndex = 0;
 			this._findToolStrip.TabStop = true;
@@ -168,13 +175,14 @@
 			this._findToolStripLabel.Name = "_findToolStripLabel";
 			this._findToolStripLabel.Size = new System.Drawing.Size(30, 22);
 			this._findToolStripLabel.Text = "&Find";
+			this._findToolStripLabel.ToolTipText = "Enter a string to search through the current test case. Not case sensitive.";
 			// 
 			// _findToolStripTextBox
 			// 
 			this._findToolStripTextBox.AcceptsReturn = true;
 			this._findToolStripTextBox.Name = "_findToolStripTextBox";
 			this._findToolStripTextBox.Size = new System.Drawing.Size(200, 25);
-			this._findToolStripTextBox.ToolTipText = "Find";
+			this._findToolStripTextBox.ToolTipText = "Enter a string to search through the current test case. Not case sensitive.";
 			this._findToolStripTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
 			// 
 			// _findToolStripButton
@@ -185,6 +193,7 @@
 			this._findToolStripButton.Name = "_findToolStripButton";
 			this._findToolStripButton.Size = new System.Drawing.Size(23, 22);
 			this._findToolStripButton.Text = "Find next (F3)";
+			this._findToolStripButton.ToolTipText = "Find the next match (F3)";
 			this._findToolStripButton.Click += new System.EventHandler(this.FindButton_Click);
 			// 
 			// _replaceToolStripTextBox
@@ -192,6 +201,7 @@
 			this._replaceToolStripTextBox.AcceptsReturn = true;
 			this._replaceToolStripTextBox.Name = "_replaceToolStripTextBox";
 			this._replaceToolStripTextBox.Size = new System.Drawing.Size(200, 25);
+			this._replaceToolStripTextBox.ToolTipText = "Enter a string to replace the find string. Replace searches are case sensitive.";
 			this._replaceToolStripTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress);
 			// 
 			// _replaceToolStripSplitButton
@@ -204,6 +214,8 @@
 			this._replaceToolStripSplitButton.Name = "_replaceToolStripSplitButton";
 			this._replaceToolStripSplitButton.Size = new System.Drawing.Size(143, 22);
 			this._replaceToolStripSplitButton.Text = "&Replace in selection";
+			this._replaceToolStripSplitButton.ToolTipText = "Replace all Find matches in the selected cells with the Replace string. (Alt + R)" +
+    "";
 			this._replaceToolStripSplitButton.ButtonClick += new System.EventHandler(this.ReplaceSelectionButton_Click);
 			// 
 			// _replaceAllToolStripMenuItem
@@ -212,6 +224,8 @@
 			this._replaceAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.A)));
 			this._replaceAllToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
 			this._replaceAllToolStripMenuItem.Text = "Replace &all";
+			this._replaceAllToolStripMenuItem.ToolTipText = "Replace all Find matches in the entire test case with the Replace string. (Alt + " +
+    "A)";
 			this._replaceAllToolStripMenuItem.Click += new System.EventHandler(this.ReplaceAllButton_Click);
 			// 
 			// replaceInSelectionToolStripMenuItem
@@ -221,6 +235,8 @@
 			this.replaceInSelectionToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.R)));
 			this.replaceInSelectionToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
 			this.replaceInSelectionToolStripMenuItem.Text = "&Replace in selection";
+			this.replaceInSelectionToolStripMenuItem.ToolTipText = "Replace all Find matches in the selected cells with the Replace string. (Alt + R)" +
+    "";
 			this.replaceInSelectionToolStripMenuItem.Click += new System.EventHandler(this.ReplaceSelectionButton_Click);
 			// 
 			// _testStateToolStripLabel
@@ -249,6 +265,7 @@
             this._loadToolStripButton,
             this._saveToolStripButton,
             this._closeToolStripButton,
+            this._resultsToolStripButton,
             this.toolStripSeparator2,
             this._insertStepToolStripSplitButton,
             this._deleteStepToolStripButton,
@@ -258,7 +275,7 @@
 			this._witToolStrip.Location = new System.Drawing.Point(0, 0);
 			this._witToolStrip.Name = "_witToolStrip";
 			this._witToolStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-			this._witToolStrip.Size = new System.Drawing.Size(802, 25);
+			this._witToolStrip.Size = new System.Drawing.Size(837, 25);
 			this._witToolStrip.Stretch = true;
 			this._witToolStrip.TabIndex = 0;
 			this._witToolStrip.TabStop = true;
@@ -282,6 +299,8 @@
 			this._loadToolStripButton.Name = "_loadToolStripButton";
 			this._loadToolStripButton.Size = new System.Drawing.Size(53, 22);
 			this._loadToolStripButton.Text = "&Load";
+			this._loadToolStripButton.ToolTipText = "Load a test case from TFS for edit. Multiple test cases are opened in their own t" +
+    "abs.";
 			this._loadToolStripButton.Click += new System.EventHandler(this.LoadButton_Click);
 			// 
 			// _saveToolStripButton
@@ -291,6 +310,7 @@
 			this._saveToolStripButton.Name = "_saveToolStripButton";
 			this._saveToolStripButton.Size = new System.Drawing.Size(51, 22);
 			this._saveToolStripButton.Text = "&Save";
+			this._saveToolStripButton.ToolTipText = "Save the test case in the current tab (Alt + S)";
 			this._saveToolStripButton.Click += new System.EventHandler(this.SaveButton_Click);
 			// 
 			// _closeToolStripButton
@@ -300,7 +320,67 @@
 			this._closeToolStripButton.Name = "_closeToolStripButton";
 			this._closeToolStripButton.Size = new System.Drawing.Size(56, 22);
 			this._closeToolStripButton.Text = "Clos&e";
+			this._closeToolStripButton.ToolTipText = "Close the test case in the current tab. Will prompt if there are unsaved changes." +
+    "";
 			this._closeToolStripButton.Click += new System.EventHandler(this.CloseCurentButton_Click);
+			// 
+			// _resultsToolStripButton
+			// 
+			this._resultsToolStripButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._enableResultsModeMenuItem,
+            this._publishToolStripMenuItem,
+            this._loadResultsToolStripMenuItem,
+            this._saveCurrentResultsToolStripMenuItem,
+            this._clearResultsToolStripMenuItem});
+			this._resultsToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_resultsToolStripButton.Image")));
+			this._resultsToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this._resultsToolStripButton.Name = "_resultsToolStripButton";
+			this._resultsToolStripButton.Size = new System.Drawing.Size(73, 22);
+			this._resultsToolStripButton.Text = "Results";
+			// 
+			// enableResultsModeMenuItem
+			// 
+			this._enableResultsModeMenuItem.CheckOnClick = true;
+			this._enableResultsModeMenuItem.Name = "enableResultsModeMenuItem";
+			this._enableResultsModeMenuItem.Size = new System.Drawing.Size(245, 22);
+			this._enableResultsModeMenuItem.Text = "Enable Results Mode";
+			this._enableResultsModeMenuItem.CheckedChanged += new System.EventHandler(this.EnableResultsModeToolStripMenuItem_CheckedChanged);
+			// 
+			// publishToolStripMenuItem
+			// 
+			this._publishToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
+			this._publishToolStripMenuItem.Name = "publishToolStripMenuItem";
+			this._publishToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
+			this._publishToolStripMenuItem.Text = "Publish to TFS";
+			this._publishToolStripMenuItem.ToolTipText = "Publish the current test result to TFS, including outcomes and screenshots.";
+			this._publishToolStripMenuItem.Click += new System.EventHandler(this.PublishButton_Click);
+			// 
+			// loadResultsToolStripMenuItem
+			// 
+			this._loadResultsToolStripMenuItem.Name = "loadResultsToolStripMenuItem";
+			this._loadResultsToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
+			this._loadResultsToolStripMenuItem.Text = "Load results from .ZIP";
+			this._loadResultsToolStripMenuItem.ToolTipText = "Load all outcomes and screenshots from a .ZIP file. Does not affect step titles o" +
+    "r expected results.";
+			this._loadResultsToolStripMenuItem.Click += new System.EventHandler(this.LoadResultsButton_Click);
+			// 
+			// saveCurrentResultsToolStripMenuItem
+			// 
+			this._saveCurrentResultsToolStripMenuItem.Name = "saveCurrentResultsToolStripMenuItem";
+			this._saveCurrentResultsToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
+			this._saveCurrentResultsToolStripMenuItem.Text = "Save current results to .ZIP";
+			this._saveCurrentResultsToolStripMenuItem.ToolTipText = "Save the current outcomes and screenshots to a .ZIP file that may be loaded later" +
+    ".";
+			this._saveCurrentResultsToolStripMenuItem.Click += new System.EventHandler(this.SaveCurrentResultsButton_Click);
+			// 
+			// _clearResultsToolStripMenuItem
+			// 
+			this._clearResultsToolStripMenuItem.Name = "_clearResultsToolStripMenuItem";
+			this._clearResultsToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
+			this._clearResultsToolStripMenuItem.Text = "Clear outcomes and screenshots";
+			this._clearResultsToolStripMenuItem.ToolTipText = "Reset all outcomes to \"inconclusive\" and remove all screenshots. A .ZIP of the cu" +
+    "rrent results will be automatically saved to your desktop.";
+			this._clearResultsToolStripMenuItem.Click += new System.EventHandler(this.ClearResultsToolStripMenuItem_Click);
 			// 
 			// toolStripSeparator2
 			// 
@@ -313,11 +393,11 @@
 			this._insertStepToolStripSplitButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.insertStepToolStripMenuItem,
             this.insertStepBelowToolStripMenuItem});
-			this._insertStepToolStripSplitButton.Image = ((System.Drawing.Image)(resources.GetObject("_insertStepToolStripSplitButton.Image")));
 			this._insertStepToolStripSplitButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 			this._insertStepToolStripSplitButton.Name = "_insertStepToolStripSplitButton";
-			this._insertStepToolStripSplitButton.Size = new System.Drawing.Size(94, 22);
+			this._insertStepToolStripSplitButton.Size = new System.Drawing.Size(78, 22);
 			this._insertStepToolStripSplitButton.Text = "&Insert Step";
+			this._insertStepToolStripSplitButton.ToolTipText = "Insert a step above the current step.";
 			this._insertStepToolStripSplitButton.ButtonClick += new System.EventHandler(this.InsertButton_Click);
 			// 
 			// insertStepToolStripMenuItem
@@ -327,6 +407,7 @@
 			this.insertStepToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.I)));
 			this.insertStepToolStripMenuItem.Size = new System.Drawing.Size(201, 22);
 			this.insertStepToolStripMenuItem.Text = "&Insert Step";
+			this.insertStepToolStripMenuItem.ToolTipText = "Insert a step above the current step.";
 			this.insertStepToolStripMenuItem.Click += new System.EventHandler(this.InsertButton_Click);
 			// 
 			// insertStepBelowToolStripMenuItem
@@ -335,6 +416,7 @@
 			this.insertStepBelowToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.B)));
 			this.insertStepBelowToolStripMenuItem.Size = new System.Drawing.Size(201, 22);
 			this.insertStepBelowToolStripMenuItem.Text = "Insert Step &Below";
+			this.insertStepBelowToolStripMenuItem.ToolTipText = "Insert a step below the current step.";
 			this.insertStepBelowToolStripMenuItem.Click += new System.EventHandler(this.InsertBelowButton_Click);
 			// 
 			// _deleteStepToolStripButton
@@ -344,6 +426,7 @@
 			this._deleteStepToolStripButton.Name = "_deleteStepToolStripButton";
 			this._deleteStepToolStripButton.Size = new System.Drawing.Size(86, 22);
 			this._deleteStepToolStripButton.Text = "&Delete Step";
+			this._deleteStepToolStripButton.ToolTipText = "Delete the currently-selected step.";
 			this._deleteStepToolStripButton.Click += new System.EventHandler(this.DeleteButton_Click);
 			// 
 			// toolStripSeparator1
@@ -368,8 +451,9 @@
 			this._stringGeneratorToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_stringGeneratorToolStripButton.Image")));
 			this._stringGeneratorToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 			this._stringGeneratorToolStripButton.Name = "_stringGeneratorToolStripButton";
-			this._stringGeneratorToolStripButton.Size = new System.Drawing.Size(113, 22);
+			this._stringGeneratorToolStripButton.Size = new System.Drawing.Size(113, 20);
 			this._stringGeneratorToolStripButton.Text = "String &Generator";
+			this._stringGeneratorToolStripButton.ToolTipText = "Put strings into the clipboard for pasting into a test case or application.";
 			this._stringGeneratorToolStripButton.Click += new System.EventHandler(this.StringGeneratorButton_Click);
 			// 
 			// RightToolStripPanel
@@ -402,13 +486,13 @@
 			// _toolStripContainer.ContentPanel
 			// 
 			this._toolStripContainer.ContentPanel.Controls.Add(this._testTabControl);
-			this._toolStripContainer.ContentPanel.Size = new System.Drawing.Size(802, 420);
+			this._toolStripContainer.ContentPanel.Size = new System.Drawing.Size(837, 444);
 			this._toolStripContainer.Dock = System.Windows.Forms.DockStyle.Fill;
 			this._toolStripContainer.LeftToolStripPanelVisible = false;
 			this._toolStripContainer.Location = new System.Drawing.Point(0, 0);
 			this._toolStripContainer.Name = "_toolStripContainer";
 			this._toolStripContainer.RightToolStripPanelVisible = false;
-			this._toolStripContainer.Size = new System.Drawing.Size(802, 470);
+			this._toolStripContainer.Size = new System.Drawing.Size(837, 494);
 			this._toolStripContainer.TabIndex = 15;
 			this._toolStripContainer.Text = "toolStripContainer1";
 			// 
@@ -424,7 +508,7 @@
 			this._testTabControl.Multiline = true;
 			this._testTabControl.Name = "_testTabControl";
 			this._testTabControl.SelectedIndex = 0;
-			this._testTabControl.Size = new System.Drawing.Size(802, 420);
+			this._testTabControl.Size = new System.Drawing.Size(837, 444);
 			this._testTabControl.TabIndex = 0;
 			// 
 			// _loadTestBackgroundWorker
@@ -437,15 +521,20 @@
 			this._saveTestBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.SaveTestBackgroundWorker_DoWork);
 			this._saveTestBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.SaveTestBackgroundWorker_RunWorkerCompleted);
 			// 
+			// _publishTestBackgroundWorker
+			// 
+			this._publishTestBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.PublishTestBackgroundWorker_DoWork);
+			this._publishTestBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.PublishTestBackgroundWorker_RunWorkerCompleted);
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(802, 470);
+			this.ClientSize = new System.Drawing.Size(837, 494);
 			this.Controls.Add(this._toolStripContainer);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.KeyPreview = true;
-			this.MinimumSize = new System.Drawing.Size(810, 500);
+			this.MinimumSize = new System.Drawing.Size(300, 500);
 			this.Name = "MainForm";
 			this.Text = "Test Steps Editor";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_Closing);
@@ -507,6 +596,13 @@
 		private System.Windows.Forms.ToolStripSeparator _toolStripSeparator2;
 		private System.Windows.Forms.ToolStripMenuItem _insertAboveToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem _insertBelowToolStripMenuItem;
+		private System.ComponentModel.BackgroundWorker _publishTestBackgroundWorker;
+		private System.Windows.Forms.ToolStripDropDownButton _resultsToolStripButton;
+		private System.Windows.Forms.ToolStripMenuItem _loadResultsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem _saveCurrentResultsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem _publishToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem _clearResultsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem _enableResultsModeMenuItem;
 	}
 }
 

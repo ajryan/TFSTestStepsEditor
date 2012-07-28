@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace TestStepsEditor
+namespace TestStepsEditor.Gui
 {
 	public class DataGridViewSearcher
 	{
