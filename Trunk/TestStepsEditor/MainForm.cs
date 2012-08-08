@@ -332,6 +332,12 @@ namespace TestStepsEditor
 			if (!Int32.TryParse(_workItemIdToolStripComboBox.Text, out workItemId))
 				return;
 
+			if (_testProject == null)
+			{
+				MessageBox.Show("Please connect to a Test Project first.", "No Connection");
+				return;
+			}
+			
 			foreach (var testEditKvp in _tabTestInfoMap)
 			{
 				if (testEditKvp.Value.WorkItemId == workItemId)

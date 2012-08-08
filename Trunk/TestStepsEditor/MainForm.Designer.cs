@@ -165,7 +165,7 @@
 			this._findToolStrip.Location = new System.Drawing.Point(0, 0);
 			this._findToolStrip.Name = "_findToolStrip";
 			this._findToolStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-			this._findToolStrip.Size = new System.Drawing.Size(837, 25);
+			this._findToolStrip.Size = new System.Drawing.Size(868, 25);
 			this._findToolStrip.Stretch = true;
 			this._findToolStrip.TabIndex = 0;
 			this._findToolStrip.TabStop = true;
@@ -275,7 +275,7 @@
 			this._witToolStrip.Location = new System.Drawing.Point(0, 0);
 			this._witToolStrip.Name = "_witToolStrip";
 			this._witToolStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-			this._witToolStrip.Size = new System.Drawing.Size(837, 25);
+			this._witToolStrip.Size = new System.Drawing.Size(868, 25);
 			this._witToolStrip.Stretch = true;
 			this._witToolStrip.TabIndex = 0;
 			this._witToolStrip.TabStop = true;
@@ -338,35 +338,35 @@
 			this._resultsToolStripButton.Size = new System.Drawing.Size(73, 22);
 			this._resultsToolStripButton.Text = "Results";
 			// 
-			// enableResultsModeMenuItem
+			// _enableResultsModeMenuItem
 			// 
 			this._enableResultsModeMenuItem.CheckOnClick = true;
-			this._enableResultsModeMenuItem.Name = "enableResultsModeMenuItem";
+			this._enableResultsModeMenuItem.Name = "_enableResultsModeMenuItem";
 			this._enableResultsModeMenuItem.Size = new System.Drawing.Size(245, 22);
 			this._enableResultsModeMenuItem.Text = "Enable Results Mode";
 			this._enableResultsModeMenuItem.CheckedChanged += new System.EventHandler(this.EnableResultsModeToolStripMenuItem_CheckedChanged);
 			// 
-			// publishToolStripMenuItem
+			// _publishToolStripMenuItem
 			// 
 			this._publishToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this._publishToolStripMenuItem.Name = "publishToolStripMenuItem";
+			this._publishToolStripMenuItem.Name = "_publishToolStripMenuItem";
 			this._publishToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
 			this._publishToolStripMenuItem.Text = "Publish to TFS";
 			this._publishToolStripMenuItem.ToolTipText = "Publish the current test result to TFS, including outcomes and screenshots.";
 			this._publishToolStripMenuItem.Click += new System.EventHandler(this.PublishButton_Click);
 			// 
-			// loadResultsToolStripMenuItem
+			// _loadResultsToolStripMenuItem
 			// 
-			this._loadResultsToolStripMenuItem.Name = "loadResultsToolStripMenuItem";
+			this._loadResultsToolStripMenuItem.Name = "_loadResultsToolStripMenuItem";
 			this._loadResultsToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
 			this._loadResultsToolStripMenuItem.Text = "Load results from .ZIP";
 			this._loadResultsToolStripMenuItem.ToolTipText = "Load all outcomes and screenshots from a .ZIP file. Does not affect step titles o" +
     "r expected results.";
 			this._loadResultsToolStripMenuItem.Click += new System.EventHandler(this.LoadResultsButton_Click);
 			// 
-			// saveCurrentResultsToolStripMenuItem
+			// _saveCurrentResultsToolStripMenuItem
 			// 
-			this._saveCurrentResultsToolStripMenuItem.Name = "saveCurrentResultsToolStripMenuItem";
+			this._saveCurrentResultsToolStripMenuItem.Name = "_saveCurrentResultsToolStripMenuItem";
 			this._saveCurrentResultsToolStripMenuItem.Size = new System.Drawing.Size(245, 22);
 			this._saveCurrentResultsToolStripMenuItem.Text = "Save current results to .ZIP";
 			this._saveCurrentResultsToolStripMenuItem.ToolTipText = "Save the current outcomes and screenshots to a .ZIP file that may be loaded later" +
@@ -451,7 +451,7 @@
 			this._stringGeneratorToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("_stringGeneratorToolStripButton.Image")));
 			this._stringGeneratorToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 			this._stringGeneratorToolStripButton.Name = "_stringGeneratorToolStripButton";
-			this._stringGeneratorToolStripButton.Size = new System.Drawing.Size(113, 20);
+			this._stringGeneratorToolStripButton.Size = new System.Drawing.Size(113, 22);
 			this._stringGeneratorToolStripButton.Text = "String &Generator";
 			this._stringGeneratorToolStripButton.ToolTipText = "Put strings into the clipboard for pasting into a test case or application.";
 			this._stringGeneratorToolStripButton.Click += new System.EventHandler(this.StringGeneratorButton_Click);
@@ -486,13 +486,13 @@
 			// _toolStripContainer.ContentPanel
 			// 
 			this._toolStripContainer.ContentPanel.Controls.Add(this._testTabControl);
-			this._toolStripContainer.ContentPanel.Size = new System.Drawing.Size(837, 444);
+			this._toolStripContainer.ContentPanel.Size = new System.Drawing.Size(868, 456);
 			this._toolStripContainer.Dock = System.Windows.Forms.DockStyle.Fill;
 			this._toolStripContainer.LeftToolStripPanelVisible = false;
 			this._toolStripContainer.Location = new System.Drawing.Point(0, 0);
 			this._toolStripContainer.Name = "_toolStripContainer";
 			this._toolStripContainer.RightToolStripPanelVisible = false;
-			this._toolStripContainer.Size = new System.Drawing.Size(837, 494);
+			this._toolStripContainer.Size = new System.Drawing.Size(868, 506);
 			this._toolStripContainer.TabIndex = 15;
 			this._toolStripContainer.Text = "toolStripContainer1";
 			// 
@@ -508,7 +508,7 @@
 			this._testTabControl.Multiline = true;
 			this._testTabControl.Name = "_testTabControl";
 			this._testTabControl.SelectedIndex = 0;
-			this._testTabControl.Size = new System.Drawing.Size(837, 444);
+			this._testTabControl.Size = new System.Drawing.Size(868, 456);
 			this._testTabControl.TabIndex = 0;
 			// 
 			// _loadTestBackgroundWorker
@@ -530,7 +530,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(837, 494);
+			this.ClientSize = new System.Drawing.Size(868, 506);
 			this.Controls.Add(this._toolStripContainer);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.KeyPreview = true;

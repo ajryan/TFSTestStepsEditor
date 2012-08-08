@@ -4,9 +4,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("TestStepsEditor")]
 [assembly: AssemblyDescription("TFS 2010 Test Case steps editor")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Lonza")]
+[assembly: AssemblyCompany("Aidan Ryan")]
 [assembly: AssemblyProduct("TestStepsEditor")]
-[assembly: AssemblyCopyright("Copyright © Lonza BioScience 2011")]
+[assembly: AssemblyCopyright("Copyright © Aidan Ryan 2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
