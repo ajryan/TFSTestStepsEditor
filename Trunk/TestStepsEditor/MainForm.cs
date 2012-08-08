@@ -375,7 +375,10 @@ namespace TestStepsEditor
 			}
 			catch (Exception ex)
 			{
-				testInfo.Message = "Could not load test case:\r\n" + ex;
+				var deniedException = ex as DeniedOrNotExistException;
+
+				string detailedMessage = deniedException != null ? deniedException.Message : ex.ToString();
+				testInfo.Message = "Could not load test case:\r\n" + detailedMessage;
 			}
 
 			e.Result = testInfo;
