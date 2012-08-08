@@ -24,6 +24,8 @@ namespace TestStepsEditor.Tfs
 			}
 		}
 
+		public bool IsHtml { get; private set; }
+
 		public void ResetDirtyState()
 		{
 			_originalCount = this.Count;
@@ -41,6 +43,7 @@ namespace TestStepsEditor.Tfs
 				if (action is ITestStep)
 				{
 					var testStep = action as ITestStep;
+					newSteps.IsHtml = newSteps.IsHtml || (testStep.Title.ToString().IndexOf("<HTML>", StringComparison.OrdinalIgnoreCase) != -1);
 					newSteps.Add(new SimpleStep(testStep.Title.ToString(), testStep.ExpectedResult.ToString()));
 				}
 				else if (action is ISharedStepReference)

@@ -49,17 +49,14 @@ namespace TestStepsEditor.Tfs
 				// directly apply to existing ITestSteps
 				if (TestCase.Actions[stepNumber] is ITestStep)
 				{
-					((ITestStep)TestCase.Actions[stepNumber]).Title = new ParameterizedString(step.Title);
-					((ITestStep)TestCase.Actions[stepNumber]).ExpectedResult = new ParameterizedString(step.ExpectedResult);
+					PopulateTestStep((ITestStep) TestCase.Actions[stepNumber], step.Title, step.ExpectedResult);
 				}
 				// current action is not ITestStep: if user-entered data is a step
 				else if (step.IsTestStep())
 				{
 					// insert a new action at this point
 					var newAction = TestCase.CreateTestStep();
-					newAction.Title = new ParameterizedString(step.Title);
-					newAction.ExpectedResult = new ParameterizedString(step.ExpectedResult);
-
+					PopulateTestStep(newAction, step.Title, step.ExpectedResult);
 					TestCase.Actions.Insert(stepNumber, newAction);
 				}
 
@@ -71,6 +68,23 @@ namespace TestStepsEditor.Tfs
 
 			TestCase.Save();
 			SimpleSteps.ResetDirtyState();
+		}
+
+		private void PopulateTestStep(ITestStep step, string title, string expectedResult)
+		{
+			step.Title = GetStepText(title);
+			step.ExpectedResult = GetStepText(expectedResult);
+			step.TestStepType = String.IsNullOrWhiteSpace(expectedResult) ? TestStepType.ActionStep : TestStepType.ValidateStep;
+		}
+
+		private ParameterizedString GetStepText(string text)
+		{
+			if (!SimpleSteps.IsHtml)
+				return new ParameterizedString(text);
+
+			string[] textTokens = text.Split(new []{Environment.NewLine}, StringSplitOptions.None);
+			return new ParameterizedString(
+				"<HTML><BODY><P>" + String.Join("</P><P>", textTokens	) + "</P></BODY></HTML>");
 		}
 	}
 }

@@ -19,8 +19,9 @@ namespace TestStepsEditor.Tfs
 
 		public SimpleStep(string title, string expectedResult, bool isTestStep = true)
 		{
-			_title = title.Replace("\n", "\r\n");
-			_expectedResult = expectedResult.Replace("\n", "\r\n");
+			_title = CleanText(title);
+			_expectedResult = CleanText(expectedResult);
+
 			Outcome = TestOutcome.Inconclusive;
 			AttachmentPaths = new List<string>();
 
@@ -82,6 +83,19 @@ namespace TestStepsEditor.Tfs
 		{
 			_originalTitle = null;
 			_originalExpectedResult = null;
+		}
+
+		private static string CleanText(string text)
+		{
+			string cleaned = text.Replace("\n", "\r\n");
+			if (cleaned.IndexOf("<HTML>", StringComparison.OrdinalIgnoreCase) == -1)
+				return cleaned;
+
+			return cleaned
+				.Substring(12, cleaned.Length - 12 - 14)
+				.Replace("<P>", "")
+				.Replace("</P>", "\r\n")
+				.TrimEnd('\r', '\n');
 		}
 	}
 }
