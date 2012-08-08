@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Deployment.Application;
 using System.Drawing;
 using System.Linq;
@@ -432,6 +433,14 @@ namespace TestStepsEditor
 
 				EnableResultsModeToolStripMenuItem_CheckedChanged(null, null);
 				_workItemIdToolStripComboBox.Text = String.Empty;
+
+				// if the test case has parameters, show parameters dialog
+				if (testInfo.TestCase.TestParameters.Any() && testInfo.TestCase is ITestCase)
+				{
+					var testCase = (ITestCase)(testInfo.TestCase);
+					var paramsDialog = new ParametersDialog(testCase);
+					paramsDialog.Show();
+				}
 			}
 			catch (Exception ex)
 			{

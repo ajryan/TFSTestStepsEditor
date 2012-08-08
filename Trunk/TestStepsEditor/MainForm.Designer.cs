@@ -258,6 +258,7 @@
 			// 
 			// _witToolStrip
 			// 
+			this._witToolStrip.AutoSize = false;
 			this._witToolStrip.Dock = System.Windows.Forms.DockStyle.None;
 			this._witToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._workItemToolStripLabel,
@@ -547,7 +548,6 @@
 			this._toolStripContainer.BottomToolStripPanel.PerformLayout();
 			this._toolStripContainer.ContentPanel.ResumeLayout(false);
 			this._toolStripContainer.TopToolStripPanel.ResumeLayout(false);
-			this._toolStripContainer.TopToolStripPanel.PerformLayout();
 			this._toolStripContainer.ResumeLayout(false);
 			this._toolStripContainer.PerformLayout();
 			this.ResumeLayout(false);

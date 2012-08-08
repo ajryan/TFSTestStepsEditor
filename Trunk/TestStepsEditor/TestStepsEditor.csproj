@@ -101,6 +101,12 @@
     <Compile Include="Gui\NumberedDataGridView.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Gui\ParametersDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\ParametersDialog.Designer.cs">
+      <DependentUpon>ParametersDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Gui\SplitContainerEx.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -139,6 +145,7 @@
     <Compile Include="Gui\StringGeneratorForm.Designer.cs">
       <DependentUpon>StringGeneratorForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Tfs\SimpleParameter.cs" />
     <Compile Include="Tfs\SimpleTestPoint.cs" />
     <Compile Include="Tfs\TestRun.cs" />
     <Compile Include="Preferences\PreferenceCollection.cs" />
@@ -147,6 +154,9 @@
     <Compile Include="Tfs\TestEditInfo.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="UserPreferences.cs" />
+    <EmbeddedResource Include="Gui\ParametersDialog.resx">
+      <DependentUpon>ParametersDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Gui\TestEditUserControl.resx">
       <DependentUpon>TestEditUserControl.cs</DependentUpon>
     </EmbeddedResource>
