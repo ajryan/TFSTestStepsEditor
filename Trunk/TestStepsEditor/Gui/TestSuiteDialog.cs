@@ -103,8 +103,6 @@ namespace TestStepsEditor.Gui
 						"The current test case does not exist in any test suites for the current test project. Cannot publish.",
 						"Cannot Publish");
 
-					DialogResult = DialogResult.Cancel;
-					//Close();
 					return;
 				}
 
@@ -122,6 +120,13 @@ namespace TestStepsEditor.Gui
 		private void OkButton_Click(object sender, EventArgs e)
 		{
 			DialogResult = DialogResult.OK;
+		}
+
+		private void RefreshButton_Click(object sender, EventArgs e)
+		{
+			UseWaitCursor = true;
+			_RelatedTestPoints = null;
+			_loadBackgroundWorker.RunWorkerAsync();
 		}
 	}
 }
