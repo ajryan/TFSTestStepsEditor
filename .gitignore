@@ -1,0 +1,13 @@
+*_ReSharper*
+*.user
+*.suo
+*.dbmdl
+*.schemaview
+*[Bb]in/
+*[Oo]bj/
+*[Dd]ebug/
+*TestResults/
+*[Ll]og.txt
+*.vssscc
+*.ReSharper
+*.vspscc

@@ -12,6 +12,7 @@ using Microsoft.TeamFoundation.Framework.Common;
 using Microsoft.TeamFoundation.TestManagement.Client;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
 using TestStepsEditor.Gui;
+using TestStepsEditor.Preferences;
 using TestStepsEditor.Tfs;
 
 namespace TestStepsEditor

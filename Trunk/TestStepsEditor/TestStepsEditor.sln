@@ -11,14 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{B08489
 	EndProjectSection
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccLocalPath0 = .
-		SccLocalPath1 = .
-		SccNumberOfProjects = 2
-		SccProjectUniqueName1 = TestStepsEditor.csproj
-		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs10
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86

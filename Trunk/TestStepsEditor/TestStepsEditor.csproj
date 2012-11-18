@@ -80,6 +80,9 @@
     <Reference Include="Microsoft.TeamFoundation.WorkItemTracking.Proxy, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>True</Private>
     </Reference>
+    <Reference Include="NLog">
+      <HintPath>packages\NLog.2.0.0.2000\lib\net40\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -131,9 +134,6 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="NumberedDataGridView.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Preferences\BooleanPreference.cs" />
     <Compile Include="Preferences\IPreference.cs" />
     <Compile Include="Preferences\Preference.cs" />
@@ -153,7 +153,7 @@
     <Compile Include="Tfs\SimpleSteps.cs" />
     <Compile Include="Tfs\TestEditInfo.cs" />
     <Compile Include="NativeMethods.cs" />
-    <Compile Include="UserPreferences.cs" />
+    <Compile Include="Preferences\UserPreferences.cs" />
     <EmbeddedResource Include="Gui\ParametersDialog.resx">
       <DependentUpon>ParametersDialog.cs</DependentUpon>
     </EmbeddedResource>
@@ -178,6 +178,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="NLog.config">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
