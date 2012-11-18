@@ -2,11 +2,14 @@
 using System.Linq;
 using Microsoft.TeamFoundation.Framework.Client;
 using Microsoft.TeamFoundation.TestManagement.Client;
+using NLog;
 
 namespace TestStepsEditor.Tfs
 {
 	public class TestRun
 	{
+		private static readonly Logger _Logger = LogManager.GetCurrentClassLogger();
+
 		private readonly TestEditInfo _testEditInfo;
 		private readonly TeamFoundationIdentity _currentIdentity;
 		private readonly ITestPoint _testPoint;
@@ -24,6 +27,9 @@ namespace TestStepsEditor.Tfs
 		// TODO: messageboxes into exception throws
 		public void Publish()
 		{
+			_Logger.Info("Publish test case " + _testEditInfo.WorkItemId);
+
+			_Logger.Debug("Create run");
 			var tfsRun = _testPoint.Plan.CreateTestRun(false);
 			
 			tfsRun.DateStarted = DateTime.Now;
@@ -31,6 +37,7 @@ namespace TestStepsEditor.Tfs
 			tfsRun.DateCompleted = DateTime.Now;
 			tfsRun.Save(); // so results object is created
 			
+			_Logger.Debug("QueryResults");
 			var result = tfsRun.QueryResults()[0];
 			result.Owner = _currentIdentity;
 			result.RunBy = _currentIdentity;
@@ -39,6 +46,7 @@ namespace TestStepsEditor.Tfs
 			result.Duration = new TimeSpan(0L);
 			result.DateCompleted = DateTime.Now.AddMinutes(0.0);
 
+			_Logger.Debug("CreateIteration");
 			var iteration = result.CreateIteration(1);
 			iteration.DateStarted = DateTime.Now;
 			iteration.DateCompleted = DateTime.Now;
@@ -47,18 +55,21 @@ namespace TestStepsEditor.Tfs
 
 			for (int actionIndex = 0; actionIndex < _testEditInfo.TestCase.Actions.Count; actionIndex++)
 			{
+				_Logger.Debug("Action " + actionIndex);
 				var testAction = _testEditInfo.TestCase.Actions[actionIndex];
 				if (testAction is ISharedStepReference)
 					continue;
 
 				var userStep = _testEditInfo.SimpleSteps[actionIndex];
 
+				_Logger.Debug("Create step result for action " + testAction.Id);
 				var stepResult = iteration.CreateStepResult(testAction.Id);
 				stepResult.ErrorMessage = String.Empty;
 				stepResult.Outcome = userStep.Outcome;
 
 				foreach (var attachmentPath in userStep.AttachmentPaths)
 				{
+					_Logger.Debug("Create attachment from " + attachmentPath);
 					var attachment = stepResult.CreateAttachment(attachmentPath);
 					stepResult.Attachments.Add(attachment);
 				}
@@ -70,14 +81,15 @@ namespace TestStepsEditor.Tfs
 				? TestOutcome.Failed
 				: TestOutcome.Passed;
 
+			_Logger.Info("Overall outcome: " + overallOutcome);
+
 			iteration.Outcome = overallOutcome;
 
+			_Logger.Debug("Add iteration");
 			result.Iterations.Add(iteration);
 
 			result.Outcome = overallOutcome;
 			result.Save(false);
 		}
-
-		
 	}
 }

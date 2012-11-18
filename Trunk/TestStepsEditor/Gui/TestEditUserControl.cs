@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Ionic.Zip;
 using Microsoft.TeamFoundation.TestManagement.Client;
+using NLog;
 using TestStepsEditor.Tfs;
 
 namespace TestStepsEditor.Gui
@@ -20,6 +21,8 @@ namespace TestStepsEditor.Gui
 
 		private uint LVM_SETTEXTBKCOLOR = 0x1026;
 
+		private static readonly Logger _Logger = LogManager.GetCurrentClassLogger();
+
 		private readonly TestEditInfo _testInfo;
 
 		private TestStepsDataGridView _testDataGridView;
@@ -27,16 +30,18 @@ namespace TestStepsEditor.Gui
 
 		public TestEditUserControl(TestEditInfo testInfo)
 		{
+			_Logger.Info("New test edit user control for test case " + testInfo.WorkItemId);
+
 			_testInfo = testInfo;
 
 			InitializeComponent();
 
-            Load += (o, e) => 
-                SendMessage(
-                    _attachmentListView.Handle,
-                    LVM_SETTEXTBKCOLOR,
-                    IntPtr.Zero,
-                    unchecked((IntPtr)(int)0xFFFFFF));
+			Load += (o, e) => 
+				SendMessage(
+					_attachmentListView.Handle,
+					LVM_SETTEXTBKCOLOR,
+					IntPtr.Zero,
+					unchecked((IntPtr)(int)0xFFFFFF));
 		}
 
 		public static TestEditUserControl Create(TestEditInfo testInfo, ContextMenuStrip contextMenuStrip, bool showResultsPanel)
@@ -93,6 +98,8 @@ namespace TestStepsEditor.Gui
 				savePath = saveFileDialog.FileName;
 			}
 
+			_Logger.Info("Save results to " + savePath);
+
 			var outcomePath = SaveCurrentOutcomes();
 
 			using (var resultZipFile = new ZipFile())
@@ -111,9 +118,14 @@ namespace TestStepsEditor.Gui
 
 		private string SaveCurrentOutcomes()
 		{
+			_Logger.Info("Save current outcomes.");
+
 			var outcomes = _testInfo.SimpleSteps.Select(s => s.Outcome.ToString());
 			var outcomeList = String.Join(",", outcomes);
 			string outcomePath = Path.Combine(EnsureTestCaseAttachmentFolder(), "outcomes.txt");
+
+			_Logger.Debug("Write " + outcomePath);
+
 			File.WriteAllText(outcomePath, outcomeList);
 			return outcomePath;
 		}
@@ -131,6 +143,8 @@ namespace TestStepsEditor.Gui
 			var openFileResult = openFileDialog.ShowDialog(this);
 			if (openFileResult == DialogResult.Cancel)
 				return;
+
+			_Logger.Info("Load results from " + openFileDialog.FileName);
 
 			// delete contents of current directory
 			Directory.Delete(EnsureTestCaseAttachmentFolder(), true);
@@ -156,6 +170,8 @@ namespace TestStepsEditor.Gui
 			if (resetConfirm != DialogResult.Yes)
 				return;
 
+			_Logger.Info("Reset results.");
+
 			string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 			string autoZipFileName = String.Format("{0}_{1}.zip", _testInfo.TestCase.Id, DateTime.Now.ToString("ddMMMyyyy_hhmmss"));
 			SaveCurrentResultsToZip(Path.Combine(desktopPath, autoZipFileName));
@@ -170,6 +186,8 @@ namespace TestStepsEditor.Gui
 
 		public void LoadCurrentResults()
 		{
+			_Logger.Info("Load current results.");
+
 			SuspendLayout();
 			_testDataGridView.SuspendLayout();
 
@@ -178,6 +196,8 @@ namespace TestStepsEditor.Gui
 			string outcomePath = Path.Combine(EnsureTestCaseAttachmentFolder(), "outcomes.txt");
 			if (File.Exists(outcomePath))
 			{
+				_Logger.Info("Read from " + outcomePath);
+
 				string outcomes = File.ReadAllText(outcomePath);
 				var outcomeTokens = outcomes.Split(',');
 
@@ -238,6 +258,8 @@ namespace TestStepsEditor.Gui
 				return;
 			}
 
+			_Logger.Info("Capture screenshot");
+
 			int imageIndex = CurrentAttachmentPaths.Count;
 			string imagePath = GetImagePath(imageIndex);
 
@@ -253,6 +275,8 @@ namespace TestStepsEditor.Gui
 			if (_attachmentListView.SelectedItems.Count == 0)
 				return;
 
+			_Logger.Info("Delete attachment(s)");
+
 			for (int attachmentIndex = _attachmentListView.Items.Count - 1;
 				attachmentIndex >= 0;
 				attachmentIndex--)
@@ -261,6 +285,7 @@ namespace TestStepsEditor.Gui
 				if (!listItem.Selected)
 					continue;
 
+				_Logger.Debug("Remove at " + attachmentIndex);
 				_attachmentImageList.Images.RemoveAt(attachmentIndex);
 
 				string attachmentPath = (string) listItem.Tag;
@@ -281,6 +306,7 @@ namespace TestStepsEditor.Gui
 				if (currentAttachmentPath == correctAttachmentPath)
 					continue;
 
+				_Logger.Debug("Move {0} to {1}", currentAttachmentPath, correctAttachmentPath);
 				File.Move(currentAttachmentPath, correctAttachmentPath);
 				
 				var listViewItem = _attachmentListView.Items[attachmentIndex];
@@ -320,6 +346,8 @@ namespace TestStepsEditor.Gui
 			if (_displayedRow == currentRow)
 				return;
 
+			_Logger.Debug("New displayed row " + _displayedRow);
+
 			_displayedRow = currentRow;
 
 			_attachmentListView.Items.Clear();
@@ -355,6 +383,8 @@ namespace TestStepsEditor.Gui
 			string movingFilePath = GetImagePath(attachmentIndex);
 			string targetFilePath = GetImagePath(attachmentIndex + direction);
 
+			_Logger.Debug("Move {0} to {1}", movingFilePath, targetFilePath);
+
 			string tmpFilePath = Path.Combine(EnsureTestCaseAttachmentFolder(), "TmpMovingImage.png");
 			File.Move(targetFilePath, tmpFilePath);
 			File.Move(movingFilePath, targetFilePath);
@@ -373,6 +403,8 @@ namespace TestStepsEditor.Gui
 		{
 			foreach (var filePath in Directory.GetFiles(EnsureTestCaseAttachmentFolder()))
 			{
+				_Logger.Debug("Load " + filePath);
+
 				string fileName = Path.GetFileName(filePath);
 
 				int underscoreIndex = fileName.IndexOf('_');
@@ -433,7 +465,10 @@ namespace TestStepsEditor.Gui
 			var attachmentFolder = Path.Combine(appData, @"TestStepsEditor\" + _testInfo.TestCase.Project.WitProject.Name + @"\" + _testInfo.WorkItemId);
 
 			if (!Directory.Exists(attachmentFolder))
+			{
+				_Logger.Info("Create attachment folder: " + attachmentFolder);
 				Directory.CreateDirectory(attachmentFolder);
+			}
 
 			return attachmentFolder;
 		}
@@ -445,6 +480,8 @@ namespace TestStepsEditor.Gui
 
 		private void ClearAttachments(bool delete = true)
 		{
+			_Logger.Info("Clear attachments.");
+
 			_attachmentListView.Items.Clear();
 			_attachmentImageList.Images.Clear();
 			foreach (var step in _testInfo.SimpleSteps)
@@ -460,6 +497,7 @@ namespace TestStepsEditor.Gui
 
 		private void ClearOutcomes()
 		{
+			_Logger.Info("Clear outcomes.");
 			for (int stepIndex = 0; stepIndex < _testInfo.SimpleSteps.Count; stepIndex++)
 			{
 				var step = _testInfo.SimpleSteps[stepIndex];

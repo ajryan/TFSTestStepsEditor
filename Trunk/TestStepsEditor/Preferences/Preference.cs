@@ -56,5 +56,13 @@ namespace TestStepsEditor.Preferences
 		{
 			return ToRegFunc(Value);
 		}
+
+		public override string ToString()
+		{
+			if (ReferenceEquals(Value, null))
+				return "<null>";
+
+			return Value.ToString();
+		}
 	}
 }

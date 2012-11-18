@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Deployment.Application;
 using System.Drawing;
 using System.Linq;
@@ -11,6 +10,7 @@ using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Framework.Common;
 using Microsoft.TeamFoundation.TestManagement.Client;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
+using NLog;
 using TestStepsEditor.Gui;
 using TestStepsEditor.Preferences;
 using TestStepsEditor.Tfs;
@@ -19,6 +19,8 @@ namespace TestStepsEditor
 {
 	public partial class MainForm : Form
 	{
+		private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
 		private TfsTeamProjectCollection _tfs;
 		private ITestManagementTeamProject _testProject;
 		private readonly UserPreferences _userPreferences = new UserPreferences();
@@ -26,6 +28,8 @@ namespace TestStepsEditor
 
 		public MainForm()
 		{
+			_logger.Debug("Initialize main form");
+
 			InitializeComponent();
 			_toolStripContainer.Enabled = false;
 
@@ -63,6 +67,9 @@ namespace TestStepsEditor
 				return;
 			}
 
+			_logger.Info("Apply server preferences. TFS URI: {0}; TestProject: {1}",
+				_userPreferences.TfsUri.Value, _userPreferences.TestProject);
+
 			_tfs = TfsTeamProjectCollectionFactory.GetTeamProjectCollection(_userPreferences.TfsUri);
 			_tfs.Connect(ConnectOptions.IncludeServices);
 			_testProject = _tfs.GetService<ITestManagementService>().GetTeamProject(_userPreferences.TestProject);
@@ -72,6 +79,8 @@ namespace TestStepsEditor
 
 		private void ApplyUserDisplayPreferences()
 		{
+			_logger.Info("Apply display preferences.");
+
 			if (_workItemIdToolStripComboBox.ComboBox != null)
 				_workItemIdToolStripComboBox.ComboBox.DataSource = _userPreferences.WorkItemIdMru.Value;
 
@@ -216,6 +225,8 @@ namespace TestStepsEditor
 		{
 			if (_tabTestInfoMap.Values.Any(testInfo => testInfo.SimpleSteps.Dirty))
 			{
+				_logger.Info("Close main form: dirty test cases.");
+
 				var confirmExit = MessageBox.Show(
 					"One or more open tests has not been saved. Are you sure you want to exit?",
 					"Confirm Exit",
@@ -229,6 +240,8 @@ namespace TestStepsEditor
 					return;
 				}
 			}
+
+			_logger.Info("Close main form.");
 
 			_userPreferences.FindToolbarTop.Value = _toolStripContainer.TopToolStripPanel.Contains(_findToolStrip);
 			_userPreferences.WorkItemToolbarTop.Value = _toolStripContainer.TopToolStripPanel.Contains(_witToolStrip);
@@ -249,6 +262,8 @@ namespace TestStepsEditor
 
 			if (CurrentSimpleSteps.Dirty)
 			{
+				_logger.Info("Close current test: dirty.");
+
 				var sureClose = MessageBox.Show(
 					"The test case has been modified. Are you sure you want to close?",
 					"Confirm Close",
@@ -259,6 +274,8 @@ namespace TestStepsEditor
 				if (sureClose == DialogResult.No)
 					return;
 			}
+
+			_logger.Info("Close current test.");
 
 			int removedIndex = _testTabControl.SelectedIndex;
 			_testTabControl.TabPages.RemoveAt(removedIndex);
@@ -277,6 +294,8 @@ namespace TestStepsEditor
 		{
 			if (_testTabControl.TabCount < 1)
 				return;
+
+			_logger.Info("Save current test.");
 
 			_testStateToolStripLabel.Text = "Saving...";
 			_toolStripContainer.Enabled = false;
@@ -312,6 +331,8 @@ namespace TestStepsEditor
 
 		private void SaveTestBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
+			_logger.Info("Save current test complete.");
+
 			_toolStripContainer.Enabled = true;
 			UseWaitCursor = false;
 			CurrentGridView.Focus();
@@ -339,7 +360,7 @@ namespace TestStepsEditor
 				MessageBox.Show("Please connect to a Test Project first.", "No Connection");
 				return;
 			}
-			
+
 			foreach (var testEditKvp in _tabTestInfoMap)
 			{
 				if (testEditKvp.Value.WorkItemId == workItemId)
@@ -349,6 +370,8 @@ namespace TestStepsEditor
 					return;
 				}
 			}
+
+			_logger.Info("Load test " + workItemId);
 
 			_testStateToolStripLabel.Text = "Loading...";
 			_toolStripContainer.Enabled = false;
@@ -369,10 +392,13 @@ namespace TestStepsEditor
 
 				if (testInfo.TestCase == null)
 				{
+					_logger.Info("Could not find test case");
 					testInfo.Message = "Input test case ID not found.";
 				}
 				else if (testInfo.TestCase.WorkItem.Project.Name != _testProject.WitProject.Name)
 				{
+					_logger.Info("Wrong project.");
+
 					testInfo.Message = String.Format(
 						"Test case is from project {0}. Current project is {1}.", 
 						testInfo.TestCase.WorkItem.Project.Name,
@@ -383,6 +409,8 @@ namespace TestStepsEditor
 			}
 			catch (Exception ex)
 			{
+				_logger.InfoException("Error loading test case.", ex);
+
 				var deniedException = ex as DeniedOrNotExistException;
 
 				string detailedMessage = deniedException != null ? deniedException.Message : ex.ToString();
@@ -394,6 +422,8 @@ namespace TestStepsEditor
 
 		private void LoadTestBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
+			_logger.Info("Load test completed.");
+
 			var testInfo = (TestEditInfo) e.Result;
 			if (!String.IsNullOrWhiteSpace(testInfo.Message))
 			{
@@ -415,6 +445,8 @@ namespace TestStepsEditor
 			
 			try
 			{
+				_logger.Info("New test edit control.");
+
 				testInfo.TestEditControl = newEditControl;
 
 				newEditControl.TestDataGridView.LoadSteps(_enableResultsModeMenuItem.Checked);
@@ -458,6 +490,8 @@ namespace TestStepsEditor
 
 		private void ChangeProjectButton_Click(object sender, EventArgs e)
 		{
+			_logger.Info("Change project.");
+
 			_userPreferences.LoadProjectSelectionFromUser();
 			if (!String.IsNullOrEmpty(_userPreferences.TestProject))
 				ApplyUserServerPreferences();
@@ -513,6 +547,8 @@ namespace TestStepsEditor
 
 		private void FindButton_Click(object sender, EventArgs e)
 		{
+			_logger.Debug("Find " + _findToolStripTextBox.Text);
+
 			var searcher = new DataGridViewSearcher(CurrentGridView);
 
 			bool notFound = searcher.Search(_findToolStripTextBox.Text) == DataGridViewSearcher.Result.NotMatched;
@@ -612,10 +648,15 @@ namespace TestStepsEditor
 				return;
 			}
 
+			_logger.Info("Publish test case " + CurrentTestEditInfo.WorkItemId);
+
 			var suiteDialog = new TestSuiteDialog(_testProject, CurrentTestEditInfo);
 			var suiteSelectResult = suiteDialog.ShowDialog(this);
 			if (suiteSelectResult == DialogResult.Cancel || suiteDialog.SelectedTestPoint == null)
+			{
+				_logger.Info("Publish cancelled.");
 				return;
+			}
 
 			var testRun = new TestRun(
 				CurrentTestEditInfo,
@@ -639,12 +680,17 @@ namespace TestStepsEditor
 			}
 			catch (Exception ex)
 			{
+			    var reporter = new ExceptionReporter(ex);
+                reporter.ReportException();
+
 				e.Result = "Could not publish test case: " + ex.Message;
 			}
 		}
 
 		private void PublishTestBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
+			_logger.Info("Publish complete.");
+
 			_testStateToolStripLabel.Text = "Publish complete.";
 			_toolStripContainer.Enabled = true;
 			UseWaitCursor = false;
@@ -663,6 +709,8 @@ namespace TestStepsEditor
 			if (CurrentTestEditControl == null)
 				return;
 
+			_logger.Info("Save results.");
+
 			try
 			{
 				CurrentTestEditControl.SaveCurrentResultsToZip();
@@ -680,6 +728,7 @@ namespace TestStepsEditor
 			if (CurrentTestEditControl == null)
 				return;
 
+			_logger.Info("Load results.");
 			CurrentTestEditControl.LoadResultsFromZip();
 		}
 
@@ -688,6 +737,7 @@ namespace TestStepsEditor
 			if (CurrentTestEditControl == null)
 				return;
 
+			_logger.Info("Reset results.");
 			CurrentTestEditControl.ResetResults();
 		}
 
@@ -695,6 +745,8 @@ namespace TestStepsEditor
 		{
 			if (CurrentTestEditControl == null)
 				return;
+
+			_logger.Info("Switch results mode: " + _enableResultsModeMenuItem.Checked);
 
 			if (_enableResultsModeMenuItem.Checked)
 			{
@@ -740,6 +792,9 @@ namespace TestStepsEditor
 			}
 			catch (Exception ex)
 			{
+				var exReporter = new ExceptionReporter(ex);
+				exReporter.ReportException();
+
 				MessageBox.Show(
 					"Could not load steps from test case: " + ex.Message,
 					"Error Loading Test Case");

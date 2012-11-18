@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Win32;
+using NLog;
 
 namespace TestStepsEditor.Preferences
 {
 	public class PreferenceCollection
 	{
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly string _regKeyBase;
 
 		public List<IPreference> Preferences { get; private set; }
@@ -19,6 +21,8 @@ namespace TestStepsEditor.Preferences
 
 		public void LoadFromRegistry()
 		{
+			_logger.Info("Load preferences from registry at " + _regKeyBase);
+
 			var key = Registry.CurrentUser.OpenSubKey(_regKeyBase);
 			if (key == null)
 				return;
@@ -35,6 +39,8 @@ namespace TestStepsEditor.Preferences
 
 		public void SaveToRegistry()
 		{
+            _logger.Info("Save preferences to registry at " + _regKeyBase);
+
 			var key = Registry.CurrentUser.OpenSubKey(_regKeyBase, true);
 			if (key == null)
 			{

@@ -4,12 +4,15 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
 using Microsoft.TeamFoundation.TestManagement.Client;
+using NLog;
 using TestStepsEditor.Tfs;
 
 namespace TestStepsEditor.Gui
 {
 	public partial class TestSuiteDialog : Form
 	{
+		private static readonly Logger _Logger = LogManager.GetCurrentClassLogger();
+
 		private static List<SimpleTestPoint> _RelatedTestPoints;
 
 		private readonly BackgroundWorker _loadBackgroundWorker;
@@ -36,6 +39,8 @@ namespace TestStepsEditor.Gui
 
 		private void LoadRelatedTestPoints()
 		{
+			_Logger.Info("Load related test points for " + _testEditInfo.WorkItemId);
+
 			_loadBackgroundWorker.DoWork += LoadBackgroundWorker_DoWork;
 			_loadBackgroundWorker.RunWorkerCompleted += LoadBackgroundWorker_RunWorkerCompleted;
 
@@ -49,6 +54,7 @@ namespace TestStepsEditor.Gui
 			{
 				if (_RelatedTestPoints != null)
 				{
+					_Logger.Info("Return cached test points set");
 					e.Result = _RelatedTestPoints;
 					return;
 				}
@@ -57,6 +63,8 @@ namespace TestStepsEditor.Gui
 
 				foreach (var plan in _testProject.TestPlans.Query("SELECT * FROM TestPlan"))
 				{
+					_Logger.Debug("Check plan " + plan.Name);
+
 					string query = String.Format("SELECT * FROM TestPoint WHERE TestCaseId = {0}", _testEditInfo.TestCase.Id);
 					relatedTestPoints.AddRange(plan.QueryTestPoints(query));
 				}
@@ -68,6 +76,9 @@ namespace TestStepsEditor.Gui
 				{
 					var suiteId = testPoint.SuiteId;
 					var suite = allSuites.Single(s => s.Id == suiteId);
+
+					_Logger.Debug("Listing plan {0} suite {1}", suite.Plan.Name, suite.Title);
+
 					displayTestPoints.Add(
 						new SimpleTestPoint
 						{
@@ -87,6 +98,8 @@ namespace TestStepsEditor.Gui
 
 		private void LoadBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
+			_Logger.Info("Load suites complete.");
+
 			UseWaitCursor = false;
 			if (e.Result is string)
 			{
