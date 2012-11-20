@@ -91,7 +91,7 @@ namespace TestStepsEditor.Gui
 				if (String.IsNullOrWhiteSpace(responseBody))
 					responseBody = "<no response from server>";
 
-				MessageBox.Show("Send error report: " + responseBody);
+				MessageBox.Show("Send error report: " + responseBody.Replace("\"", String.Empty));
 			}
 			catch (Exception ex)
 			{
