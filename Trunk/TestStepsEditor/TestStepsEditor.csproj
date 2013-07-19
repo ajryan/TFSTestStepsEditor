@@ -117,8 +117,20 @@
     <Compile Include="Gui\ParametersDialog.Designer.cs">
       <DependentUpon>ParametersDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Gui\SelectQuery.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\SelectQuery.Designer.cs">
+      <DependentUpon>SelectQuery.cs</DependentUpon>
+    </Compile>
     <Compile Include="Gui\SplitContainerEx.cs">
       <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Gui\SelectTestCase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\SelectTestCase.Designer.cs">
+      <DependentUpon>SelectTestCase.cs</DependentUpon>
     </Compile>
     <Compile Include="Gui\TestEditUserControl.cs">
       <SubType>UserControl</SubType>
@@ -158,6 +170,11 @@
     <Compile Include="Gui\StringGeneratorForm.Designer.cs">
       <DependentUpon>StringGeneratorForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Tfs\SimpleParameter.cs" />
     <Compile Include="Tfs\SimpleTestPoint.cs" />
     <Compile Include="Tfs\TestRun.cs" />
@@ -169,6 +186,12 @@
     <Compile Include="Preferences\UserPreferences.cs" />
     <EmbeddedResource Include="Gui\ParametersDialog.resx">
       <DependentUpon>ParametersDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gui\SelectQuery.resx">
+      <DependentUpon>SelectQuery.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gui\SelectTestCase.resx">
+      <DependentUpon>SelectTestCase.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Gui\TestEditUserControl.resx">
       <DependentUpon>TestEditUserControl.cs</DependentUpon>
@@ -186,6 +209,10 @@
     <EmbeddedResource Include="Gui\StringGeneratorForm.resx">
       <DependentUpon>StringGeneratorForm.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
