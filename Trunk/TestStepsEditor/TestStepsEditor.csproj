@@ -117,6 +117,12 @@
     <Compile Include="Gui\ParametersDialog.Designer.cs">
       <DependentUpon>ParametersDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Gui\QueryAndTestCasePicker.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gui\QueryAndTestCasePicker.Designer.cs">
+      <DependentUpon>QueryAndTestCasePicker.cs</DependentUpon>
+    </Compile>
     <Compile Include="Gui\SplitContainerEx.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -158,6 +164,11 @@
     <Compile Include="Gui\StringGeneratorForm.Designer.cs">
       <DependentUpon>StringGeneratorForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Tfs\SimpleParameter.cs" />
     <Compile Include="Tfs\SimpleTestPoint.cs" />
     <Compile Include="Tfs\TestRun.cs" />
@@ -169,6 +180,9 @@
     <Compile Include="Preferences\UserPreferences.cs" />
     <EmbeddedResource Include="Gui\ParametersDialog.resx">
       <DependentUpon>ParametersDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gui\QueryAndTestCasePicker.resx">
+      <DependentUpon>QueryAndTestCasePicker.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Gui\TestEditUserControl.resx">
       <DependentUpon>TestEditUserControl.cs</DependentUpon>
@@ -187,9 +201,15 @@
       <DependentUpon>StringGeneratorForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\arrow_refresh.png" />
     <Content Include="Resources\green_cube.ico" />
+    <None Include="Resources\QueryIcon.png" />
     <Content Include="Resources\string_gen.ico" />
   </ItemGroup>
   <ItemGroup>
