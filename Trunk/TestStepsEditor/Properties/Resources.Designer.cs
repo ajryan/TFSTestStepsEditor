@@ -60,13 +60,6 @@ namespace TestStepsEditor.Properties {
             }
         }
         
-        internal static System.Drawing.Bitmap arrow_refresh {
-            get {
-                object obj = ResourceManager.GetObject("arrow_refresh", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
         internal static System.Drawing.Bitmap QueryIcon {
             get {
                 object obj = ResourceManager.GetObject("QueryIcon", resourceCulture);

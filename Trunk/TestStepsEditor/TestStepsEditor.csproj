@@ -207,7 +207,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\arrow_refresh.png" />
     <Content Include="Resources\green_cube.ico" />
     <None Include="Resources\QueryIcon.png" />
     <Content Include="Resources\string_gen.ico" />

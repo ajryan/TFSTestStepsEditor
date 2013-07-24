@@ -5,8 +5,6 @@ using System.Deployment.Application;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Windows.Forms;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Framework.Common;
@@ -27,7 +25,7 @@ namespace TestStepsEditor
 		private readonly UserPreferences _userPreferences = new UserPreferences();
 		private readonly Dictionary<int, TestEditInfo> _tabTestInfoMap = new Dictionary<int, TestEditInfo>();
 		private QueryAndTestCasePicker _queryAndTestCasePicker;
-		private string _testCaseNumber;
+		//private string _testCaseNumber;
 
 		public MainForm()
 		{
@@ -226,6 +224,14 @@ namespace TestStepsEditor
 
 		private void MainForm_Closing(object sender, FormClosingEventArgs e)
 		{
+			if (e.Cancel)
+			{
+				// SelectQueryAndTestCases window sets e.Cancel to false to stop the child/dependent 
+				// window from actually closing and instead just hides it, so for the main form close
+				// set it back to default value so the main form can close if we want it to close.
+				e.Cancel = false;
+			}
+
 			if (_tabTestInfoMap.Values.Any(testInfo => testInfo.SimpleSteps.Dirty))
 			{
 				_logger.Info("Close main form: dirty test cases.");
@@ -324,7 +330,13 @@ namespace TestStepsEditor
 
 		private void LoadButton_Click(object sender, EventArgs e)
 		{
-			this.GetTestCaseData(true);
+			int workingId;
+			if (!int.TryParse(this._workItemIdToolStripComboBox.Text, out workingId))
+			{
+				return;
+			}
+
+			this.GetTestCaseData(workingId);
 		}
 
 		private void LoadTestBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -721,57 +733,26 @@ namespace TestStepsEditor
 		{	 
 			if (this._queryAndTestCasePicker == null || this._queryAndTestCasePicker.Project != this._testProject)
 			{
-				this._queryAndTestCasePicker = new QueryAndTestCasePicker() { Project = this._testProject };
+				this._queryAndTestCasePicker = new QueryAndTestCasePicker { Project = this._testProject, Owner = this };
 			}
 
 			this._queryAndTestCasePicker.StartPosition = FormStartPosition.Manual;
 			// set the location of the window to be on top of the test steps editor window
 			this._queryAndTestCasePicker.Location = new Point(this.Location.X + 25, this.Location.Y + 25);
 			// subscribe to the event that fires when the test case number is set from the test case picker list
-			this._queryAndTestCasePicker.TestCaseNumberSet += new EventHandler(QueryAndTestCasePicker_TestCaseNumberSet);
+			this._queryAndTestCasePicker.TestCaseNumberSet += this.QueryAndTestCasePicker_TestCaseNumberSet;
 			// show it as a modeless window
 			this._queryAndTestCasePicker.Show();
 		}
 
 		private void QueryAndTestCasePicker_TestCaseNumberSet(object sender, EventArgs e)
 		{
-			this._testCaseNumber = this._queryAndTestCasePicker.TestCaseNumber.ToString();
-			this.GetTestCaseData(false);
+			this.GetTestCaseData(this._queryAndTestCasePicker.TestCaseNumber);
 		}
 
-		private void RefreshCurrentTestCaseToolStripButton_Click(object sender, EventArgs e)
-		{
-			if (this._testTabControl.TabPages.Count < 1 || _tabTestInfoMap.Count < 1)
-			{
-				return;
-			}
-
-			this._testCaseNumber = this._testTabControl.SelectedTab.Text.Split(' ')[0].Trim();
-			if (!DiscardChangesCheck())
-			{
-				return;
-			}
-
-			TestEditInfo newTestEditInfo = new TestEditInfo(int.Parse(this._testCaseNumber)) { TestCase = _tabTestInfoMap[this._testTabControl.SelectedIndex].TestCase };
-			if (newTestEditInfo == null || newTestEditInfo.TestCase == null)
-			{
-				MessageBox.Show("Unable to find original test case data, please close the test\r\n" + 
-					"case panel without saving and reload the test case.", "Original Test Case Data Missing Error");
-				return;			
-			}
-
-			SimpleSteps newSteps = TryCreateSimpleSteps(newTestEditInfo);
-			CurrentSimpleSteps.Clear();
-			foreach (SimpleStep step in newSteps)
-			{
-				CurrentSimpleSteps.Add(step);
-			}
-
-			this._testTabControl.SelectedTab.Refresh();
-		}
 		#endregion Event handlers
 
-		private void GetTestCaseData(bool useTestCaseNumberTextBox)
+		private void GetTestCaseData(int testCaseNumber)
 		{
 			if (this._testProject == null)
 			{
@@ -779,26 +760,9 @@ namespace TestStepsEditor
 				return;
 			}
 
-			int workItemId;
-
-			if (useTestCaseNumberTextBox)
-			{
-				if (!int.TryParse(this._workItemIdToolStripComboBox.Text, out workItemId))
-				{
-					return;
-				}
-			}
-			else
-			{
-				if (!int.TryParse(this._testCaseNumber, out workItemId))
-				{
-					return;
-				}
-			}
-
 			foreach (var testEditKvp in this._tabTestInfoMap)
 			{
-				if (testEditKvp.Value.WorkItemId == workItemId)
+				if (testEditKvp.Value.WorkItemId == testCaseNumber)
 				{
 					this._testTabControl.SelectedIndex = testEditKvp.Key;
 					this.CurrentGridView.Focus();
@@ -806,7 +770,7 @@ namespace TestStepsEditor
 				}
 			}
 
-			this._logger.Info("Load test " + workItemId);
+			this._logger.Info("Load test " + testCaseNumber);
 
 			this._testStateToolStripLabel.Text = "Loading...";
 			this._toolStripContainer.Enabled = false;
@@ -814,7 +778,7 @@ namespace TestStepsEditor
 
 			try
 			{
-				this._loadTestBackgroundWorker.RunWorkerAsync(new TestEditInfo(workItemId));
+				this._loadTestBackgroundWorker.RunWorkerAsync(new TestEditInfo(testCaseNumber));
 			}
 			catch (InvalidOperationException)
 			{
@@ -832,9 +796,22 @@ namespace TestStepsEditor
 				return;
 			}
 
-			if (!DiscardChangesCheck())
+			_tabTestInfoMap.Values.Any(testInfo => testInfo.SimpleSteps.Dirty);
+			if (this.CurrentSimpleSteps.Dirty)
 			{
-				return;
+				this._logger.Info("Discard current test Changes: dirty.");
+
+				var sureClose = MessageBox.Show(
+					"The test case steps have been modified. Are you sure?",
+					"Confirm Discard Changes",
+					MessageBoxButtons.YesNo,
+					MessageBoxIcon.Question,
+					MessageBoxDefaultButton.Button2);
+
+				if (sureClose == DialogResult.No)
+				{
+					return;
+				}
 			}
 
 			this._logger.Info("Close current test.");

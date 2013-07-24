@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Windows.Forms;
 using Microsoft.TeamFoundation.TestManagement.Client;
 
@@ -12,9 +11,7 @@ namespace TestStepsEditor.Gui
 		private List<ITestCase> _testCaseList = new List<ITestCase>();
 		private int _testCaseNumber;
 
-		private delegate void PopulateTestCaseList(ITestCase testCase);
-
-		private delegate void ShowGettingTestCasesMessageDelegate();
+		private delegate void PopulateTestCaseList();
 
 		public QueryAndTestCasePicker()
 		{
@@ -100,7 +97,7 @@ namespace TestStepsEditor.Gui
 
 			foreach (ITestCaseQuery query in allQueries)
 			{
-				if (query.QueryText.Contains("= 'Test Case'") || query.QueryText.Contains("in group 'Test Case Category'"))
+				if (!query.QueryText.Contains("WorkItemLinks") && (query.QueryText.Contains("= 'Test Case'") || query.QueryText.Contains("in group 'Test Case Category'")))
 				{
 					this.PopulateTreeView(query);
 				}
@@ -129,13 +126,21 @@ namespace TestStepsEditor.Gui
 
 		private void PopulateTestList()
 		{
-			this._testCaseListBox.Items.Clear();
-			foreach (ITestCase testCase in this._testCaseList)
+			if (this._testCaseListBox.InvokeRequired)
 			{
-				this.AddTestCaseToList(testCase);
+				PopulateTestCaseList populateTestCaseList = this.PopulateTestList;
+				this.Invoke(populateTestCaseList);
 			}
+			else
+			{
+				this._testCaseListBox.Items.Clear();
+				foreach (ITestCase testCase in this._testCaseList)
+				{
+					this._testCaseListBox.Items.Add(string.Format("{0}: {1}", testCase.Id, testCase.Title));
+				}
 
-			this.SetControlsState(true);
+				this.SetControlsState(true);
+			}
 		}
 
 		private void AddToTeamQueries(ITestCaseQuery query)
@@ -147,7 +152,7 @@ namespace TestStepsEditor.Gui
 		{
 			this.AddToTree(query, this._queryTreeView.Nodes[0]);
 		}
-		
+
 		private void AddToTree(ITestCaseQuery query, TreeNode workingNode)
 		{
 			string working = query.Name.Replace("«", string.Empty).Trim();
@@ -184,38 +189,6 @@ namespace TestStepsEditor.Gui
 			}
 
 			workingNode.Nodes.Add(new TreeNode { Text = string.Format("Query: {0}", queryName), Name = queryName, Tag = query });
-		}
-
-		private void LoadTestCaseList()
-		{
-			foreach (var testCase in this._testCaseList)
-			{
-				this.AddTestCaseToList(testCase);
-			}
-		}
-
-		private void AddTestCaseToList(ITestCase testCase)
-		{
-			if (this._testCaseListBox.InvokeRequired)
-			{
-				PopulateTestCaseList populateTestCaseList = this.AddTestCaseToList;
-				this.Invoke(populateTestCaseList, testCase);
-			}
-			else
-			{
-				this._testCaseListBox.Items.Add(string.Format("{0}: {1}", testCase.Id, testCase.Title));
-			}
-		}
-		
-		private void CopyListButton_Click(object sender, EventArgs e)
-		{
-			StringBuilder queryList = new StringBuilder();
-			foreach (string entry in _testCaseListBox.Items)
-			{
-				queryList.AppendLine(entry);
-			}
-
-			Clipboard.SetText(queryList.ToString());
 		}
 
 		private void LoadSelectedTestCaseButton_Click(object sender, EventArgs e)
@@ -258,6 +231,12 @@ namespace TestStepsEditor.Gui
 			this._switchToQuerySelectorButton.Visible = this._loadSelectedTestCaseButton.Visible = this._testCaseListBox.Visible = viewTestCasesList;
 			this._switchToTestCaseSelectorButton.Visible = this._runQueryButton.Visible = this._queryTreeView.Visible = !viewTestCasesList;
 			this._instructionLabel.Text = viewTestCasesList ? @"Select a test case from the list and click the 'Load' button." : @"Select a query to execute:"; 
+		}
+
+		private void QueryAndTestCasePicker_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			e.Cancel = true;
+			this.Hide();
 		}
 	}
 }
