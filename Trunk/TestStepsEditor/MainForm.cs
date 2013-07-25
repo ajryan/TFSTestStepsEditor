@@ -25,7 +25,6 @@ namespace TestStepsEditor
 		private readonly UserPreferences _userPreferences = new UserPreferences();
 		private readonly Dictionary<int, TestEditInfo> _tabTestInfoMap = new Dictionary<int, TestEditInfo>();
 		private QueryAndTestCasePicker _queryAndTestCasePicker;
-		//private string _testCaseNumber;
 
 		public MainForm()
 		{
@@ -827,26 +826,6 @@ namespace TestStepsEditor
 				this._tabTestInfoMap.Remove(tabIndex);
 				this._tabTestInfoMap[tabIndex - 1] = movedTestInfo;
 			}
-		}
-
-		private bool DiscardChangesCheck()
-		{
-			_tabTestInfoMap.Values.Any(testInfo => testInfo.SimpleSteps.Dirty);
-			if (this.CurrentSimpleSteps.Dirty)
-			{
-				this._logger.Info("Discard current test Changes: dirty.");
-
-				var sureClose = MessageBox.Show(
-					"The test case steps have been modified. Are you sure?",
-					"Confirm Discard Changes",
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Question,
-					MessageBoxDefaultButton.Button2);
-
-				return sureClose == DialogResult.Yes;
-			}
-
-			return true;
 		}
 
 		private void ReplaceInCells(bool selectedOnly)
