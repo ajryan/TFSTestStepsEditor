@@ -54,7 +54,7 @@ namespace TestStepsEditor
 						_toolStripContainer.Enabled = true;
 
 						MessageBox.Show("Could not load previous TFS connection.\n\nError:\n" + ex.Message, "Error Restoring Previous Connection");
-						_changeProjectToolStripButton.Text = "(not connected)";
+						_testStateToolStripLabel.Text = _changeProjectToolStripButton.Text = "(not connected)";
 					}
 				});
 		}
@@ -729,7 +729,13 @@ namespace TestStepsEditor
 		}
 
 		private void SelectQueryToolStripButton_Click(object sender, EventArgs e)
-		{	 
+		{
+			if (this._testProject == null)
+			{
+				MessageBox.Show("Please confirm you have connectivity to the TFS server and select an available test project, then try again.", "No Test Project Available");
+				return;
+			}
+
 			if (this._queryAndTestCasePicker == null || this._queryAndTestCasePicker.Project != this._testProject)
 			{
 				this._queryAndTestCasePicker = new QueryAndTestCasePicker { Project = this._testProject, Owner = this };
