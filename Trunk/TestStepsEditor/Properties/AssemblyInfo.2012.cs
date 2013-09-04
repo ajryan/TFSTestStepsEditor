@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("TestStepsEditor")]
-[assembly: AssemblyDescription("TFS 2010 Test Case steps editor")]
+[assembly: AssemblyTitle("TestStepsEditor 2012")]
+[assembly: AssemblyDescription("TFS 2012 Test Case steps editor")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Aidan Ryan")]
 [assembly: AssemblyProduct("TestStepsEditor")]

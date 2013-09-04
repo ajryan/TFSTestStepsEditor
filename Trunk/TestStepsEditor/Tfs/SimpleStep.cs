@@ -95,6 +95,7 @@ namespace TestStepsEditor.Tfs
 				.Substring(12, cleaned.Length - 12 - 14)
 				.Replace("<P>", "")
 				.Replace("</P>", "\r\n")
+                .Replace("<P />", "\r\n")
 				.TrimEnd('\r', '\n');
 		}
 	}

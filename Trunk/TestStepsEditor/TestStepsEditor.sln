@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{B08489
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestStepsEditor.2012", "TestStepsEditor.2012.csproj", "{AAFBC0C2-92AB-4E90-8352-860B736A840B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -20,6 +22,10 @@ Global
 		{18659412-05A2-4C21-8365-0C8385963FE4}.Debug|x86.Build.0 = Debug|x86
 		{18659412-05A2-4C21-8365-0C8385963FE4}.Release|x86.ActiveCfg = Release|x86
 		{18659412-05A2-4C21-8365-0C8385963FE4}.Release|x86.Build.0 = Release|x86
+		{AAFBC0C2-92AB-4E90-8352-860B736A840B}.Debug|x86.ActiveCfg = Debug|x86
+		{AAFBC0C2-92AB-4E90-8352-860B736A840B}.Debug|x86.Build.0 = Debug|x86
+		{AAFBC0C2-92AB-4E90-8352-860B736A840B}.Release|x86.ActiveCfg = Release|x86
+		{AAFBC0C2-92AB-4E90-8352-860B736A840B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

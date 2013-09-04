@@ -55,17 +55,7 @@ namespace TestStepsEditor.Gui
 			{
 				_testCaseList.Clear();
 				ITestCaseQuery query = (ITestCaseQuery) _queryTreeView.SelectedNode.Tag;
-				IEnumerable<ITestCase> testCaseEnumerable = query.Execute();
-				IEnumerator<ITestCase> testCaseEnumerator = testCaseEnumerable.GetEnumerator();
-				while (testCaseEnumerator.MoveNext())
-				{
-					_testCaseList.Add(testCaseEnumerator.Current);
-				}
-
-				if (_testCaseList.Count == 0)
-				{
-					return;
-				}
+				_testCaseList.AddRange(query.Execute());
 			}
 			catch (Exception ex)
 			{
@@ -94,7 +84,8 @@ namespace TestStepsEditor.Gui
 				if (!query.QueryText.Contains("WorkItemLinks") && 
 					(
 						query.QueryText.Contains("= 'Test Case'") || 
-						query.QueryText.Contains("in group 'Test Case Category'")
+						query.QueryText.Contains("in group 'Test Case Category'") ||
+                        query.QueryText.Contains("in group 'Microsoft.TestCaseCategory'")
 					))
 				{
 					PopulateTreeView(query);
