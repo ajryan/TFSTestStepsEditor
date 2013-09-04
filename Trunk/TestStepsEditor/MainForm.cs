@@ -24,7 +24,6 @@ namespace TestStepsEditor
 		private ITestManagementTeamProject _testProject;
 		private readonly UserPreferences _userPreferences = new UserPreferences();
 		private readonly Dictionary<int, TestEditInfo> _tabTestInfoMap = new Dictionary<int, TestEditInfo>();
-		private QueryAndTestCasePicker _queryAndTestCasePicker;
 
 		public MainForm()
 		{
@@ -223,14 +222,6 @@ namespace TestStepsEditor
 
 		private void MainForm_Closing(object sender, FormClosingEventArgs e)
 		{
-			if (e.Cancel)
-			{
-				// SelectQueryAndTestCases window sets e.Cancel to false to stop the child/dependent 
-				// window from actually closing and instead just hides it, so for the main form close
-				// set it back to default value so the main form can close if we want it to close.
-				e.Cancel = false;
-			}
-
 			if (_tabTestInfoMap.Values.Any(testInfo => testInfo.SimpleSteps.Dirty))
 			{
 				_logger.Info("Close main form: dirty test cases.");
@@ -330,7 +321,7 @@ namespace TestStepsEditor
 		private void LoadButton_Click(object sender, EventArgs e)
 		{
 			int workingId;
-			if (!int.TryParse(this._workItemIdToolStripComboBox.Text, out workingId))
+			if (!int.TryParse(_workItemIdToolStripComboBox.Text, out workingId))
 			{
 				return;
 			}
@@ -430,7 +421,7 @@ namespace TestStepsEditor
 				{
 					var testCase = (ITestCase)(testInfo.TestCase);
 					var paramsDialog = new ParametersDialog(testCase);
-					paramsDialog.Show();
+					paramsDialog.Show(this);
 				}
 			}
 			catch (Exception ex)
@@ -730,60 +721,64 @@ namespace TestStepsEditor
 
 		private void SelectQueryToolStripButton_Click(object sender, EventArgs e)
 		{
-			if (this._testProject == null)
+			if (_testProject == null)
 			{
-				MessageBox.Show("Please confirm you have connectivity to the TFS server and select an available test project, then try again.", "No Test Project Available");
+				MessageBox.Show(@"Please confirm you have connectivity to the TFS server and select an available test project, then try again.", "No Test Project Available");
 				return;
 			}
 
-			if (this._queryAndTestCasePicker == null || this._queryAndTestCasePicker.Project != this._testProject)
-			{
-				this._queryAndTestCasePicker = new QueryAndTestCasePicker { Project = this._testProject, Owner = this };
-			}
+			var queryAndTestCasePicker = new QueryAndTestCasePicker(_testProject);
 
-			this._queryAndTestCasePicker.StartPosition = FormStartPosition.Manual;
 			// set the location of the window to be on top of the test steps editor window
-			this._queryAndTestCasePicker.Location = new Point(this.Location.X + 25, this.Location.Y + 25);
 			// subscribe to the event that fires when the test case number is set from the test case picker list
-			this._queryAndTestCasePicker.TestCaseNumberSet += this.QueryAndTestCasePicker_TestCaseNumberSet;
+			queryAndTestCasePicker.TestCaseNumberSet += this.QueryAndTestCasePicker_TestCaseNumberSet;
+			queryAndTestCasePicker.Closed += QueryAndTestCasePicker_Closed;
 			// show it as a modeless window
-			this._queryAndTestCasePicker.Show();
+			queryAndTestCasePicker.Show(this);
 		}
 
 		private void QueryAndTestCasePicker_TestCaseNumberSet(object sender, EventArgs e)
 		{
-			this.GetTestCaseData(this._queryAndTestCasePicker.TestCaseNumber);
+			this.GetTestCaseData(((QueryAndTestCasePicker)sender).TestCaseNumber);
+		}
+
+		private void QueryAndTestCasePicker_Closed(object sender, EventArgs e)
+		{
+			var picker = (QueryAndTestCasePicker) sender;
+			
+			picker.TestCaseNumberSet -= this.QueryAndTestCasePicker_TestCaseNumberSet;
+			picker.Closed -= this.QueryAndTestCasePicker_Closed;
 		}
 
 		#endregion Event handlers
 
 		private void GetTestCaseData(int testCaseNumber)
 		{
-			if (this._testProject == null)
+			if (_testProject == null)
 			{
 				MessageBox.Show("Please connect to a Test Project first.", "No Connection");
 				return;
 			}
 
-			foreach (var testEditKvp in this._tabTestInfoMap)
+			foreach (var testEditKvp in _tabTestInfoMap)
 			{
 				if (testEditKvp.Value.WorkItemId == testCaseNumber)
 				{
-					this._testTabControl.SelectedIndex = testEditKvp.Key;
+					_testTabControl.SelectedIndex = testEditKvp.Key;
 					this.CurrentGridView.Focus();
 					return;
 				}
 			}
 
-			this._logger.Info("Load test " + testCaseNumber);
+			_logger.Info("Load test " + testCaseNumber);
 
-			this._testStateToolStripLabel.Text = "Loading...";
-			this._toolStripContainer.Enabled = false;
+			_testStateToolStripLabel.Text = "Loading...";
+			_toolStripContainer.Enabled = false;
 			this.UseWaitCursor = true;
 
 			try
 			{
-				this._loadTestBackgroundWorker.RunWorkerAsync(new TestEditInfo(testCaseNumber));
+				_loadTestBackgroundWorker.RunWorkerAsync(new TestEditInfo(testCaseNumber));
 			}
 			catch (InvalidOperationException)
 			{
@@ -796,15 +791,14 @@ namespace TestStepsEditor
 
 		private void CloseCurrentTab()
 		{
-			if (this._testTabControl.SelectedTab == null)
+			if (_testTabControl.SelectedTab == null)
 			{
 				return;
 			}
 
-			_tabTestInfoMap.Values.Any(testInfo => testInfo.SimpleSteps.Dirty);
 			if (this.CurrentSimpleSteps.Dirty)
 			{
-				this._logger.Info("Discard current test Changes: dirty.");
+				_logger.Info("Discard current test Changes: dirty.");
 
 				var sureClose = MessageBox.Show(
 					"The test case steps have been modified. Are you sure?",
@@ -819,18 +813,18 @@ namespace TestStepsEditor
 				}
 			}
 
-			this._logger.Info("Close current test.");
+			_logger.Info("Close current test.");
 
-			int removedIndex = this._testTabControl.SelectedIndex;
-			this._testTabControl.TabPages.RemoveAt(removedIndex);
+			int removedIndex = _testTabControl.SelectedIndex;
+			_testTabControl.TabPages.RemoveAt(removedIndex);
 
-			this._tabTestInfoMap.Remove(removedIndex);
+			_tabTestInfoMap.Remove(removedIndex);
 
-			for (int tabIndex = removedIndex + 1; tabIndex <= this._testTabControl.TabCount; tabIndex++)
+			for (int tabIndex = removedIndex + 1; tabIndex <= _testTabControl.TabCount; tabIndex++)
 			{
-				var movedTestInfo = this._tabTestInfoMap[tabIndex];
-				this._tabTestInfoMap.Remove(tabIndex);
-				this._tabTestInfoMap[tabIndex - 1] = movedTestInfo;
+				var movedTestInfo = _tabTestInfoMap[tabIndex];
+				_tabTestInfoMap.Remove(tabIndex);
+				_tabTestInfoMap[tabIndex - 1] = movedTestInfo;
 			}
 		}
 
@@ -870,7 +864,7 @@ namespace TestStepsEditor
 			var newEditControl = TestEditUserControl.Create(testEditInfo, _testGridContextMenu, _enableResultsModeMenuItem.Checked);
 			newEditControl.Dock = DockStyle.Fill;
 
-			string newTabKey = _testTabControl.TabCount.ToString();
+			string newTabKey = _testTabControl.TabCount.ToString("0");
 			string tabTitle = testEditInfo.TestCase.Id + " " + testEditInfo.TestCase.Title;
 
 			_testTabControl.TabPages.Add(newTabKey, tabTitle);
